@@ -59,7 +59,9 @@
     .play-btn { background:var(--accent); color:white; padding:15px 22px; font-weight:900; font-size:18px; }
     .play-btn::before { content:"▶"; margin-right:8px; }
     .timer-pill { color:var(--muted); background:#f1ece3; padding:9px 12px; border-radius:999px; font-size:13px; font-weight:800; }
-    .player-shell { width:min(100%, 560px); aspect-ratio:16/9; margin:0 auto 22px; border-radius:18px; overflow:hidden; background:#000; border:1px solid #111; transition:.2s box-shadow, .2s transform; }
+    .player-shell { width:min(100%, 560px); aspect-ratio:16/9; margin:0 auto 22px; border-radius:18px; overflow:hidden; background:#000; border:1px solid #111; transition:.2s box-shadow, .2s transform, .2s width; }
+    .player-shell.quiz-mode { width:200px; aspect-ratio:1/1; }
+    .player-shell.review-mode { width:min(100%, 560px); aspect-ratio:16/9; }
     .player-shell.answer-reveal { box-shadow:0 0 0 4px rgba(31,122,77,.20), var(--shadow); }
     #player { width:100%; height:100%; }
     .warning { font-size:12px; line-height:1.5; color:var(--muted); text-align:center; margin:-10px 0 22px; }
@@ -114,7 +116,7 @@
           </select>
         </div>
       </div>
-      <p class="note">各問題で冒頭3秒を聴き、交響曲番号と楽章番号を選びます。出題順はランダムで重複しません。</p>
+      <p class="note">各問題は表示と同時に自動で3秒再生します。交響曲番号と楽章番号を選んでください。出題順はランダムで重複しません。</p>
       <div id="localFileWarning" class="local-warning hidden">このHTMLをダブルクリックして開く <code>file://</code> 方式では、YouTube埋め込みが再生エラー153になることがあります。GitHub Pagesで公開するか、同梱の <code>start_local.bat</code> から起動してください。</div>
       <button id="startBtn" class="primary">クイズを始める</button>
     </section>
@@ -128,14 +130,14 @@
       <p class="note" style="margin-top:-10px">正誤判定後は「次の問題」か「YouTubeで聴く」を選べます。「YouTubeで聴く」は正解の演奏をその位置から続けて再生します。</p>
 
       <div class="play-row">
-        <button id="playBtn" class="play-btn">3秒再生</button>
+        <button id="playBtn" class="play-btn">もう一度3秒再生</button>
         <span id="replayInfo" class="timer-pill">何度でも再生できます</span>
       </div>
 
-      <div class="player-shell" aria-label="YouTube player">
+      <div class="player-shell quiz-mode" aria-label="YouTube player">
         <div id="player"></div>
       </div>
-      <p id="playerNote" class="warning">YouTubeの規約上、再生中のプレーヤーを隠したり覆ったりせず表示しています。回答後は同じ動画を確認できます。</p>
+      <p id="playerNote" class="warning">出題と同時に3秒再生します。YouTubeの仕様上、動画タイトル等を完全には非表示にできないため、出題中はプレーヤーを最小サイズにしています。回答後は大きく表示します。</p>
 
       <div class="answer-area">
         <h3>交響曲番号</h3>
@@ -196,6 +198,7 @@
     const feedbackEl = document.getElementById('feedback');
     const replayInfo = document.getElementById('replayInfo');
     const localFileWarning = document.getElementById('localFileWarning');
+    const playerShell = document.querySelector('.player-shell');
     const isFileProtocol = location.protocol === 'file:';
 
     let player = null;
@@ -209,7 +212,9 @@
     let playCount = 0;
     let replayLimit = Infinity;
     let stopTimer = null;
-    let stopWhenPlaying = false;
+    let clipGuardTimer = null;
+    let clipMode = false;
+    let pendingAutoPlay = false;
 
     function shuffle(arr) {
       const a = [...arr];
@@ -285,7 +290,8 @@
       listenBtn.classList.add('hidden');
       feedbackEl.className = 'feedback hidden';
       feedbackEl.textContent = '';
-      document.querySelector('.player-shell').classList.remove('answer-reveal');
+      playerShell.classList.remove('answer-reveal', 'review-mode');
+      playerShell.classList.add('quiz-mode');
       updateReplayInfo();
       updatePlayEnabled();
     }
@@ -301,32 +307,63 @@
 
     function currentTrack() { return quiz[index]; }
 
-    function loadQuestion() {
+    function clearClipGuards() {
+      clearTimeout(stopTimer);
+      clearInterval(clipGuardTimer);
+      stopTimer = null;
+      clipGuardTimer = null;
+    }
+
+    function enforceClipLimit() {
+      if (!clipMode || answered || !player || typeof player.getCurrentTime !== 'function') return;
+      const t = currentTrack();
+      const endAt = t.start + 3;
+      const now = player.getCurrentTime();
+      if (now >= endAt - 0.05) {
+        player.pauseVideo();
+        clearClipGuards();
+      }
+    }
+
+    function startClipPlayback() {
+      if (!apiReady || playCount >= replayLimit || answered || !player) return;
+      const t = currentTrack();
+      clearClipGuards();
+      clipMode = true;
+      playCount++;
+      updateReplayInfo();
+      updatePlayEnabled();
+      // endSeconds とブラウザ側の監視を併用し、プレーヤーをクリックされても3秒より先へ進ませない。
+      player.loadVideoById({
+        videoId: t.v,
+        startSeconds: t.start,
+        endSeconds: t.start + 3
+      });
+    }
+
+    function loadQuestion(autoPlay = true) {
+      clearClipGuards();
+      clipMode = true;
       resetSelections();
       progressEl.textContent = `${index + 1} / ${quiz.length}`;
       scoreEl.textContent = `${score}点`;
       if (player && apiReady) {
         player.stopVideo();
-        player.cueVideoById({ videoId: currentTrack().v, startSeconds: currentTrack().start });
+        if (autoPlay) startClipPlayback();
+      } else {
+        pendingAutoPlay = autoPlay;
       }
     }
 
     function playClip() {
-      if (!apiReady || playCount >= replayLimit || answered) return;
-      const t = currentTrack();
-      clearTimeout(stopTimer);
-      playCount++;
-      updateReplayInfo();
-      updatePlayEnabled();
-      stopWhenPlaying = true;
-      player.loadVideoById({ videoId: t.v, startSeconds: t.start });
+      startClipPlayback();
     }
 
     function submitAnswer() {
       if (!selectedS || !selectedM || answered) return;
       answered = true;
-      clearTimeout(stopTimer);
-      stopWhenPlaying = false;
+      clearClipGuards();
+      clipMode = false;
       if (player) player.pauseVideo();
       const t = currentTrack();
       const correct = selectedS === t.s && selectedM === t.m;
@@ -342,14 +379,15 @@
       nextBtn.textContent = index === quiz.length - 1 ? '結果を見る' : '次の問題';
       listenBtn.textContent = 'YouTubeで聴く';
       updatePlayEnabled();
-      document.querySelector('.player-shell').classList.add('answer-reveal');
+      playerShell.classList.remove('quiz-mode');
+      playerShell.classList.add('review-mode', 'answer-reveal');
     }
 
     function nextQuestion() {
       if (!answered) return;
       if (index < quiz.length - 1) {
         index++;
-        loadQuestion();
+        loadQuestion(true);
         window.scrollTo({top:0, behavior:'smooth'});
       } else {
         showResult();
@@ -358,12 +396,13 @@
 
     function listenOnYouTube() {
       if (!answered || !apiReady || !player) return;
-      clearTimeout(stopTimer);
-      stopWhenPlaying = false;
+      clearClipGuards();
+      clipMode = false;
       const t = currentTrack();
       player.loadVideoById({ videoId: t.v, startSeconds: t.start });
-      document.querySelector('.player-shell').classList.add('answer-reveal');
-      document.querySelector('.player-shell').scrollIntoView({behavior:'smooth', block:'center'});
+      playerShell.classList.remove('quiz-mode');
+      playerShell.classList.add('review-mode', 'answer-reveal');
+      playerShell.scrollIntoView({behavior:'smooth', block:'center'});
     }
 
     function showResult() {
@@ -386,12 +425,13 @@
       setupEl.classList.add('hidden');
       resultEl.classList.add('hidden');
       quizEl.classList.remove('hidden');
-      loadQuestion();
+      loadQuestion(true);
       window.scrollTo({top:0, behavior:'smooth'});
     }
 
     function goSetup() {
-      clearTimeout(stopTimer);
+      clearClipGuards();
+      clipMode = false;
       if (player) player.stopVideo();
       resultEl.classList.add('hidden');
       quizEl.classList.add('hidden');
@@ -418,16 +458,34 @@
         events: {
           onReady: () => {
             apiReady = true;
+            if (!isFileProtocol) {
+              startBtn.disabled = false;
+              startBtn.textContent = 'クイズを始める';
+            }
             updatePlayEnabled();
-            if (quiz.length) loadQuestion();
+            if (quiz.length && pendingAutoPlay) {
+              pendingAutoPlay = false;
+              startClipPlayback();
+            }
           },
           onStateChange: (event) => {
-            if (event.data === YT.PlayerState.PLAYING && stopWhenPlaying) {
-              stopWhenPlaying = false;
-              clearTimeout(stopTimer);
+            if (event.data === YT.PlayerState.PLAYING && clipMode && !answered) {
+              clearClipGuards();
+              const t = currentTrack();
+              const endAt = t.start + 3;
+              const now = (typeof player.getCurrentTime === 'function') ? player.getCurrentTime() : t.start;
+              if (now >= endAt - 0.05) {
+                player.pauseVideo();
+                return;
+              }
+              const remainingMs = Math.max(0, (endAt - now) * 1000);
               stopTimer = setTimeout(() => {
-                if (player && typeof player.pauseVideo === 'function') player.pauseVideo();
-              }, 3000);
+                if (clipMode && !answered && player) player.pauseVideo();
+              }, remainingMs + 80);
+              clipGuardTimer = setInterval(enforceClipLimit, 50);
+            }
+            if ((event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) && clipMode) {
+              clearClipGuards();
             }
           },
           onError: (event) => {
@@ -445,6 +503,9 @@
         }
       });
     };
+
+    startBtn.disabled = true;
+    startBtn.textContent = 'YouTube準備中…';
 
     if (isFileProtocol) {
       localFileWarning.classList.remove('hidden');
