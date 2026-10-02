@@ -1,420 +1,725 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="ベートーヴェン交響曲全37楽章・3秒イントロクイズ" />
-  <title>Beethoven 37 — 3秒イントロクイズ</title>
-  <style>
-    :root {
-      --bg: #f4f1ea;
-      --card: #fffdf8;
-      --ink: #171717;
-      --muted: #6b665d;
-      --line: #d9d2c5;
-      --accent: #5c4033;
-      --accent2: #8c6b52;
-      --good: #1f7a4d;
-      --bad: #b0443b;
-      --shadow: 0 16px 40px rgba(45, 35, 24, .10);
-      --radius: 22px;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background:
-        radial-gradient(circle at 15% 10%, rgba(140,107,82,.10), transparent 28%),
-        radial-gradient(circle at 90% 15%, rgba(92,64,51,.08), transparent 24%),
-        var(--bg);
-      color: var(--ink);
-      min-height: 100vh;
-    }
-    button, select { font: inherit; }
-    .wrap { width: min(980px, calc(100% - 28px)); margin: 0 auto; padding: 28px 0 54px; }
-    header { display:flex; align-items:flex-end; justify-content:space-between; gap:18px; margin-bottom:20px; }
-    h1 { margin:0; font-size: clamp(30px, 5vw, 52px); letter-spacing:-.035em; line-height:1; }
-    .subtitle { margin:8px 0 0; color:var(--muted); font-weight:600; }
-    .badge { background:var(--ink); color:white; border-radius:999px; padding:8px 12px; font-size:13px; white-space:nowrap; }
-    .card { background:rgba(255,253,248,.96); border:1px solid rgba(217,210,197,.9); border-radius:var(--radius); box-shadow:var(--shadow); padding:clamp(18px, 3vw, 30px); }
-    .hidden { display:none !important; }
-    .setup-grid { display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
-    .field label { display:block; font-weight:800; margin-bottom:8px; }
-    select { width:100%; border:1px solid var(--line); background:white; border-radius:14px; padding:13px 14px; }
-    .note { color:var(--muted); line-height:1.7; font-size:14px; }
-    .primary, .secondary, .answer-btn, .play-btn {
-      border:0; border-radius:14px; cursor:pointer; transition:.15s transform, .15s opacity, .15s background;
-    }
-    button:hover { transform: translateY(-1px); }
-    button:disabled { opacity:.45; cursor:not-allowed; transform:none; }
-    .primary { background:var(--ink); color:white; padding:14px 20px; font-weight:800; }
-    .secondary { background:#eee8de; color:var(--ink); padding:12px 17px; font-weight:800; }
-    .topbar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px; }
-    .progress { font-weight:900; letter-spacing:.02em; }
-    .score { color:var(--muted); font-weight:800; }
-    .question-title { font-size:clamp(22px,4vw,34px); margin:8px 0 18px; }
-    .play-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:18px; }
-    .play-btn { background:var(--accent); color:white; padding:15px 22px; font-weight:900; font-size:18px; }
-    .play-btn::before { content:"▶"; margin-right:8px; }
-    .timer-pill { color:var(--muted); background:#f1ece3; padding:9px 12px; border-radius:999px; font-size:13px; font-weight:800; }
-    .player-shell { width:min(100%, 560px); aspect-ratio:16/9; margin:0 auto 22px; border-radius:18px; overflow:hidden; background:#000; border:1px solid #111; }
-    #player { width:100%; height:100%; }
-    .warning { font-size:12px; line-height:1.5; color:var(--muted); text-align:center; margin:-10px 0 22px; }
-    .answer-area h3 { margin:0 0 10px; font-size:15px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
-    .button-grid { display:grid; grid-template-columns:repeat(9,1fr); gap:8px; margin-bottom:18px; }
-    .movement-grid { grid-template-columns:repeat(5,1fr); max-width:520px; }
-    .answer-btn { padding:12px 8px; background:white; border:1px solid var(--line); font-weight:900; }
-    .answer-btn.selected { background:var(--ink); color:white; border-color:var(--ink); }
-    .submit-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:8px; }
-    .feedback { margin-top:18px; border-radius:16px; padding:16px 18px; font-weight:800; line-height:1.55; }
-    .feedback.good { background:#e8f5ed; color:var(--good); border:1px solid #b9dfc9; }
-    .feedback.bad { background:#faecea; color:var(--bad); border:1px solid #e8c0bb; }
-    .answer-line { color:var(--ink); display:block; margin-top:5px; font-weight:900; }
-    .result-score { font-size:clamp(46px,10vw,84px); font-weight:950; letter-spacing:-.05em; margin:8px 0; }
-    .result-sub { color:var(--muted); font-size:18px; font-weight:700; }
-    .result-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:22px; }
-    footer { margin-top:18px; color:var(--muted); font-size:12px; line-height:1.6; }
-    @media (max-width:720px) {
-      .setup-grid { grid-template-columns:1fr; }
-      .button-grid { grid-template-columns:repeat(5,1fr); }
-      header { align-items:flex-start; flex-direction:column; }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Referrer Policy for YouTube Embed Error 153 prevention -->
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <title>ベートーヴェン交響曲 全37楽章 イントロクイズ</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Noto+Serif+JP:wght@400;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            400: '#f1c40f',
+                            500: '#d4af37',
+                            600: '#aa8c2c',
+                        },
+                        classic: {
+                            dark: '#121110',
+                            card: '#1e1c18',
+                            border: '#3a352b',
+                            accent: '#c5a059'
+                        }
+                    },
+                    fontFamily: {
+                        cinzel: ['Cinzel', 'serif'],
+                        serif: ['"Noto Serif JP"', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #121110;
+            color: #e5e0d8;
+            font-family: 'Noto Serif JP', serif;
+        }
+        .gold-gradient {
+            background: linear-gradient(135deg, #f39c12 0%, #d4af37 50%, #997a15 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .btn-gold {
+            background: linear-gradient(135deg, #d4af37 0%, #aa8c2c 100%);
+            color: #121110;
+            transition: all 0.2s ease;
+        }
+        .btn-gold:hover {
+            background: linear-gradient(135deg, #ebd168 0%, #c5a059 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+        }
+        .glass-card {
+            background: rgba(30, 28, 24, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(197, 160, 89, 0.25);
+        }
+    </style>
 </head>
-<body>
-  <main class="wrap">
-    <header>
-      <div>
-        <h1>Beethoven 37</h1>
-        <p class="subtitle">交響曲全37楽章・3秒イントロクイズ</p>
-      </div>
-      <div class="badge">YouTube IFrame Player API</div>
+<body class="min-h-screen flex flex-col justify-between p-3 sm:p-6 antialiased selection:bg-gold-500 selection:text-black">
+
+    <header class="max-w-4xl mx-auto w-full flex flex-col sm:flex-row justify-between items-center py-4 border-b border-classic-border gap-4">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('start')">
+            <div class="w-10 h-10 rounded-full bg-gold-500 flex items-center justify-center text-black font-bold text-xl shadow-lg">
+                <i class="fa-solid font-cinzel">B</i>
+            </div>
+            <div>
+                <h1 class="font-cinzel text-xl sm:text-2xl font-bold tracking-wider gold-gradient">BEETHOVEN 37</h1>
+                <p class="text-xs text-stone-400">ベートーヴェン交響曲全37楽章 イントロクイズ (オーケストラ生音源)</p>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="flex items-center gap-1.5 bg-stone-900/80 p-1 rounded-xl border border-stone-800 text-xs sm:text-sm">
+            <button id="nav-start" onclick="switchTab('start')" class="px-3 py-2 rounded-lg font-semibold transition-all bg-gold-500 text-stone-950 shadow">
+                <i class="fa-solid fa-flag-checkered mr-1"></i>スタート
+            </button>
+            <button id="nav-quiz" onclick="switchTab('quiz')" class="px-3 py-2 rounded-lg font-semibold transition-all text-stone-300 hover:text-white">
+                <i class="fa-solid fa-graduation-cap mr-1"></i>クイズ
+            </button>
+            <button id="nav-library" onclick="switchTab('library')" class="px-3 py-2 rounded-lg font-semibold transition-all text-stone-300 hover:text-white">
+                <i class="fa-solid fa-book-open mr-1"></i>全37楽章図鑑
+            </button>
+            <button id="nav-settings" onclick="switchTab('settings')" class="px-3 py-2 rounded-lg font-semibold transition-all text-stone-300 hover:text-white">
+                <i class="fa-solid fa-sliders mr-1"></i>設定
+            </button>
+        </nav>
     </header>
 
-    <section id="setup" class="card">
-      <h2 style="margin-top:0">クイズ設定</h2>
-      <div class="setup-grid">
-        <div class="field">
-          <label for="questionCount">問題数</label>
-          <select id="questionCount">
-            <option value="10">10問</option>
-            <option value="20">20問</option>
-            <option value="37">37問（全楽章）</option>
-          </select>
+    <main class="max-w-3xl mx-auto w-full my-6 flex-1 flex flex-col justify-center">
+
+        <!-- START / PREPARATION TAB -->
+        <div id="tab-start" class="space-y-6">
+            <div class="glass-card rounded-3xl p-6 sm:p-10 text-center space-y-6">
+                <div class="inline-block p-4 rounded-full bg-gold-500/10 border border-gold-500/30 text-gold-400 text-3xl mb-2">
+                    <i class="fa-solid fa-music"></i>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-bold font-cinzel gold-gradient">ベートーヴェン交響曲 全37楽章<br><span class="text-lg sm:text-xl text-stone-200">イントロマスターへの挑戦</span></h2>
+                
+                <p class="text-xs sm:text-sm text-stone-300 leading-relaxed max-w-xl mx-auto font-serif">
+                    第1番から第9番（「田園」の全5楽章を含む）までの全37楽章を完全収録！<br>
+                    すべてYouTube上の実際のオーケストラ演奏録音（指定タイムスタンプ）から出題されます。
+                </p>
+
+                <!-- Local File Protocol Warning (Error 153 Prevention Guidance) -->
+                <div id="file-protocol-warning" class="hidden bg-amber-950/80 p-4 rounded-2xl border border-amber-600/60 text-left space-y-2 max-w-md mx-auto text-xs text-amber-200">
+                    <div class="flex items-center gap-2 font-bold text-amber-400">
+                        <i class="fa-solid fa-triangle-exclamation text-base"></i>
+                        <span>ローカルファイル（file://）起動の注意</span>
+                    </div>
+                    <p class="leading-relaxed">
+                        ブラウザでHTMLファイルを直接開いている場合、YouTubeのセキュリティ仕様（HTTPリファラー欠落）により<strong>「エラー153」</strong>が発生する場合があります。
+                    </p>
+                    <p class="text-[11px] text-amber-300/80 bg-stone-900/80 p-2 rounded border border-amber-800">
+                        💡 <strong>解決策：</strong> GitHub Pagesへプッシュ（公開）するか、VS Code等の「Live Server（http://localhost）」経由で開くとYouTube再生が100%正常に機能します。
+                    </p>
+                </div>
+
+                <!-- Preparation Steps -->
+                <div class="bg-stone-950/80 p-5 rounded-2xl border border-stone-800 text-left space-y-3 max-w-md mx-auto text-xs sm:text-sm">
+                    <div class="flex items-center gap-3 text-gold-400 font-bold border-b border-stone-800 pb-2">
+                        <i class="fa-solid fa-circle-info"></i> 音源再生の準備について
+                    </div>
+                    <p class="text-stone-300 leading-normal">
+                        ブラウザのセキュリティ制限により、下のボタンを押してYouTubeプレイヤーの初期化テストを行ってからクイズを開始します。
+                    </p>
+                    <div id="prep-status" class="text-amber-400 font-medium flex items-center gap-2">
+                        <i class="fa-solid fa-circle-notch animate-spin"></i> プレイヤー初期化中...
+                    </div>
+                </div>
+
+                <!-- Big Start Button -->
+                <div class="pt-2">
+                    <button id="start-game-btn" onclick="initAndStartQuiz()" class="btn-gold px-8 py-4 rounded-2xl font-bold text-base sm:text-lg shadow-xl w-full max-w-xs flex items-center justify-center gap-3 mx-auto transition-transform active:scale-95">
+                        <i class="fa-solid fa-play text-xl"></i>
+                        <span>準備完了・ゲームスタート</span>
+                    </button>
+                </div>
+            </div>
         </div>
-        <div class="field">
-          <label for="replayMode">再生回数</label>
-          <select id="replayMode">
-            <option value="unlimited">何度でも再生可</option>
-            <option value="1">1回だけ</option>
-            <option value="2">2回まで</option>
-          </select>
+
+        <!-- QUIZ TAB -->
+        <div id="tab-quiz" class="hidden space-y-6">
+            <!-- Game Stats Bar -->
+            <div class="glass-card rounded-2xl p-4 flex justify-between items-center text-center">
+                <div class="flex items-center gap-4">
+                    <div>
+                        <span class="text-xs text-stone-400 block">スコア</span>
+                        <span id="score-text" class="text-xl sm:text-2xl font-bold font-cinzel text-gold-400">0 / 0</span>
+                    </div>
+                    <div class="h-8 w-px bg-stone-800"></div>
+                    <div>
+                        <span class="text-xs text-stone-400 block">連続正解</span>
+                        <span id="streak-text" class="text-xl sm:text-2xl font-bold font-cinzel text-amber-500">🔥 0</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span id="difficulty-badge" class="px-3 py-1 rounded-full text-xs font-semibold bg-stone-800 text-gold-400 border border-stone-700">
+                        <i class="fa-solid fa-stopwatch mr-1"></i>3.0秒
+                    </span>
+                    <button onclick="resetStats()" class="p-2 text-stone-400 hover:text-white transition" title="スコアリセット">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Player & Challenge Box -->
+            <div class="glass-card rounded-3xl p-6 sm:p-8 text-center relative overflow-hidden">
+                <p class="text-xs font-semibold uppercase tracking-widest text-gold-500 mb-2">Question <span id="q-number">1</span></p>
+                <h2 class="text-xl sm:text-2xl font-bold mb-4 text-stone-100">この曲はどの楽章？（オーケストラ音源）</h2>
+
+                <!-- Big Play Button Area -->
+                <div class="my-6 flex flex-col items-center justify-center gap-3">
+                    <button id="play-btn" onclick="playAudioIntro()" class="w-24 h-24 sm:w-28 sm:h-28 rounded-full btn-gold flex flex-col items-center justify-center shadow-2xl relative group focus:outline-none">
+                        <i id="play-icon" class="fa-solid fa-play text-3xl sm:text-4xl ml-1"></i>
+                        <span id="play-label" class="text-xs font-bold uppercase tracking-wider mt-1">再生</span>
+                        
+                        <!-- Pulse Rings on Playing -->
+                        <div id="play-ring" class="hidden absolute inset-0 rounded-full border-2 border-gold-400 animate-ping"></div>
+                    </button>
+
+                    <div id="loading-warning" class="hidden text-xs text-amber-400 bg-amber-950/60 px-4 py-2 rounded-xl border border-amber-800 max-w-sm mt-2">
+                        <i class="fa-solid fa-triangle-exclamation mr-1"></i>
+                        <span id="loading-warning-text">音源の読み込みに時間がかかっています。下部プレイヤーの再生ボタンを直接押してください。</span>
+                    </div>
+
+                    <!-- Progress Bar for Audio Cutoff -->
+                    <div class="w-full max-w-xs bg-stone-900 rounded-full h-2.5 mt-2 overflow-hidden border border-stone-800 relative">
+                        <div id="audio-progress" class="bg-gold-500 h-full w-0 transition-all duration-75"></div>
+                    </div>
+                </div>
+
+                <!-- Embedded Orchestra Audio Player Box -->
+                <div id="yt-player-wrapper" class="w-full max-w-sm mx-auto my-4 rounded-xl overflow-hidden bg-black border border-stone-800 relative">
+                    <div id="yt-player-container" class="w-full h-40 flex items-center justify-center">
+                        <div id="yt-player"></div>
+                    </div>
+                </div>
+
+                <!-- Answer Options Grid -->
+                <div id="options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
+                    <!-- Dynamic Answer Buttons -->
+                </div>
+
+                <!-- Feedback Panel -->
+                <div id="feedback-panel" class="hidden mt-6 p-4 sm:p-5 rounded-xl border text-left transition-all duration-300">
+                    <div class="flex items-start gap-3">
+                        <div id="feedback-icon-container" class="text-2xl"></div>
+                        <div class="flex-1">
+                            <h3 id="feedback-title" class="font-bold text-lg"></h3>
+                            <p id="feedback-piece-name" class="text-stone-200 font-semibold mt-1"></p>
+                            <p id="feedback-desc" class="text-xs text-stone-400 mt-2 leading-relaxed"></p>
+
+                            <div class="mt-4 flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-stone-700/50">
+                                <a id="feedback-yt-link" target="_blank" rel="noopener noreferrer" class="text-xs text-gold-400 hover:underline flex items-center gap-1">
+                                    <i class="fa-brands fa-youtube text-red-500"></i> YouTubeでフル演奏を見る
+                                </a>
+                                <button onclick="nextQuestion()" class="btn-gold px-5 py-2 rounded-lg text-xs font-bold shadow flex items-center gap-2">
+                                    次の問題へ <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-      <p class="note">各問題で冒頭3秒を聴き、交響曲番号と楽章番号を選びます。出題順はランダムで重複しません。</p>
-      <button id="startBtn" class="primary">クイズを始める</button>
-    </section>
 
-    <section id="quiz" class="card hidden">
-      <div class="topbar">
-        <div id="progress" class="progress">1 / 10</div>
-        <div id="score" class="score">0点</div>
-      </div>
-      <h2 class="question-title">この3秒は、どの交響曲の何楽章？</h2>
+        <!-- LIBRARY TAB -->
+        <div id="tab-library" class="hidden space-y-4">
+            <div class="glass-card rounded-2xl p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 class="text-xl font-bold font-cinzel text-gold-400">交響曲全37楽章データブック</h2>
+                    <p class="text-xs text-stone-400 mt-0.5">全曲の開始タイムスタンプとオーケストラ解説を収録。</p>
+                </div>
+                <!-- Filter Symphony Dropdown -->
+                <select id="library-filter" onchange="renderLibrary()" class="bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-xs text-stone-200 focus:outline-none focus:border-gold-500">
+                    <option value="all">全9曲 (37楽章)</option>
+                    <option value="1">第1番 ハ長調 (4楽章)</option>
+                    <option value="2">第2番 ニ長調 (4楽章)</option>
+                    <option value="3">第3番 変ホ長調 「英雄」 (4楽章)</option>
+                    <option value="4">第4番 変ロ長調 (4楽章)</option>
+                    <option value="5">第5番 ハ短調 「運命」 (4楽章)</option>
+                    <option value="6">第6番 ヘ長調 「田園」 (5楽章)</option>
+                    <option value="7">第7番 イ長調 (4楽章)</option>
+                    <option value="8">第8番 ヘ長調 (4楽章)</option>
+                    <option value="9">第9番 ニ短調 「合唱付き」 (4楽章)</option>
+                </select>
+            </div>
 
-      <div class="play-row">
-        <button id="playBtn" class="play-btn">3秒再生</button>
-        <span id="replayInfo" class="timer-pill">何度でも再生できます</span>
-      </div>
-
-      <div class="player-shell" aria-label="YouTube player">
-        <div id="player"></div>
-      </div>
-      <p class="warning">YouTubeの仕様上、動画タイトル等がプレーヤー上に表示される場合があります。プレーヤーを隠す・覆う実装は行っていません。</p>
-
-      <div class="answer-area">
-        <h3>交響曲番号</h3>
-        <div id="symphonyButtons" class="button-grid"></div>
-        <h3>楽章番号</h3>
-        <div id="movementButtons" class="button-grid movement-grid"></div>
-        <div class="submit-row">
-          <button id="answerBtn" class="primary" disabled>回答する</button>
-          <button id="nextBtn" class="secondary hidden">次の問題</button>
+            <div id="library-list" class="space-y-3">
+                <!-- Injected via JavaScript -->
+            </div>
         </div>
-        <div id="feedback" class="feedback hidden"></div>
-      </div>
-    </section>
 
-    <section id="result" class="card hidden">
-      <div style="color:var(--muted);font-weight:900">RESULT</div>
-      <div id="resultScore" class="result-score">0 / 10</div>
-      <div id="resultSub" class="result-sub"></div>
-      <div class="result-actions">
-        <button id="retryBtn" class="primary">もう一度</button>
-        <button id="backBtn" class="secondary">設定に戻る</button>
-      </div>
-    </section>
+        <!-- SETTINGS TAB -->
+        <div id="tab-settings" class="hidden space-y-6">
+            <div class="glass-card rounded-2xl p-6 sm:p-8 space-y-6">
+                <h2 class="text-xl font-bold font-cinzel text-gold-400 border-b border-stone-800 pb-3">クイズ難易度・設定</h2>
 
-    <footer>
-      音源はYouTube上の動画を埋め込み再生しています。YouTube動画そのものを本アプリに保存・再配布していません。開始位置は授業用イントロクイズ向けに調整した値です。
-    </footer>
-  </main>
+                <!-- Play Time Duration -->
+                <div class="space-y-2">
+                    <label class="text-sm font-semibold text-stone-200 block">イントロ再生時間</label>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button onclick="setDuration(1.0)" id="dur-1" class="dur-btn py-2.5 rounded-lg border border-stone-700 text-xs font-bold text-stone-300 hover:border-gold-500">1.0 秒<br><span class="text-[10px] text-stone-500 font-normal">神レベル</span></button>
+                        <button onclick="setDuration(2.0)" id="dur-2" class="dur-btn py-2.5 rounded-lg border border-stone-700 text-xs font-bold text-stone-300 hover:border-gold-500">2.0 秒<br><span class="text-[10px] text-stone-500 font-normal">上級</span></button>
+                        <button onclick="setDuration(3.0)" id="dur-3" class="dur-btn py-2.5 rounded-lg border border-stone-700 text-xs font-bold text-stone-300 hover:border-gold-500 active">3.0 秒<br><span class="text-[10px] text-stone-500 font-normal">標準</span></button>
+                        <button onclick="setDuration(5.0)" id="dur-5" class="dur-btn py-2.5 rounded-lg border border-stone-700 text-xs font-bold text-stone-300 hover:border-gold-500">5.0 秒<br><span class="text-[10px] text-stone-500 font-normal">初級</span></button>
+                    </div>
+                </div>
 
-  <script>
-    const TRACKS = [
-      {s:1,m:1,v:'JAGip4nOsOg',start:25},{s:1,m:2,v:'JAGip4nOsOg',start:557},{s:1,m:3,v:'JAGip4nOsOg',start:978},{s:1,m:4,v:'JAGip4nOsOg',start:1190},
-      {s:2,m:1,v:'DPpxhmivhCQ',start:9},{s:2,m:2,v:'DPpxhmivhCQ',start:817},{s:2,m:3,v:'DPpxhmivhCQ',start:1519},{s:2,m:4,v:'DPpxhmivhCQ',start:1828},
-      {s:3,m:1,v:'DWwppYEEdcI',start:37},{s:3,m:2,v:'DWwppYEEdcI',start:1058},{s:3,m:3,v:'DWwppYEEdcI',start:1818},{s:3,m:4,v:'DWwppYEEdcI',start:2163},
-      {s:4,m:1,v:'1u8vBQrNJs8',start:1},{s:4,m:2,v:'1u8vBQrNJs8',start:695},{s:4,m:3,v:'1u8vBQrNJs8',start:1280},{s:4,m:4,v:'1u8vBQrNJs8',start:1630},
-      {s:5,m:1,v:'de7QndXj5is',start:12},{s:5,m:2,v:'de7QndXj5is',start:500},{s:5,m:3,v:'de7QndXj5is',start:1118},{s:5,m:4,v:'de7QndXj5is',start:1442},
-      {s:6,m:1,v:'i66PId3uZ-4',start:0},{s:6,m:2,v:'i66PId3uZ-4',start:698},{s:6,m:3,v:'i66PId3uZ-4',start:1425},{s:6,m:4,v:'i66PId3uZ-4',start:1754},{s:6,m:5,v:'i66PId3uZ-4',start:1987},
-      {s:7,m:1,v:'H_5GaFEPUww',start:61},{s:7,m:2,v:'H_5GaFEPUww',start:773},{s:7,m:3,v:'H_5GaFEPUww',start:1275},{s:7,m:4,v:'H_5GaFEPUww',start:1728},
-      {s:8,m:1,v:'WcgxxciDdy0',start:3},{s:8,m:2,v:'WcgxxciDdy0',start:514},{s:8,m:3,v:'WcgxxciDdy0',start:739},{s:8,m:4,v:'WcgxxciDdy0',start:1010},
-      {s:9,m:1,v:'PgnKjHvRAAY',start:1},{s:9,m:2,v:'PgnKjHvRAAY',start:972},{s:9,m:3,v:'PgnKjHvRAAY',start:1701},{s:9,m:4,v:'PgnKjHvRAAY',start:2517}
-    ];
+                <!-- Symphony Selection Scope -->
+                <div class="space-y-2">
+                    <label class="text-sm font-semibold text-stone-200 block">出題範囲</label>
+                    <select id="setting-scope" onchange="updateScope()" class="w-full bg-stone-900 border border-stone-700 rounded-xl p-3 text-sm text-stone-200 focus:outline-none focus:border-gold-500">
+                        <option value="all">全37楽章からランダム出題</option>
+                        <option value="famous">有名な楽章のみ（各曲第1楽章＋田園/運命/9番終楽章等）</option>
+                        <option value="symphony_5">第5番「運命」の4楽章のみ</option>
+                        <option value="symphony_6">第6番「田園」の5楽章のみ</option>
+                        <option value="symphony_9">第9番「合唱付き」の4楽章のみ</option>
+                    </select>
+                </div>
+            </div>
+        </div>
 
-    const setupEl = document.getElementById('setup');
-    const quizEl = document.getElementById('quiz');
-    const resultEl = document.getElementById('result');
-    const startBtn = document.getElementById('startBtn');
-    const playBtn = document.getElementById('playBtn');
-    const answerBtn = document.getElementById('answerBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const retryBtn = document.getElementById('retryBtn');
-    const backBtn = document.getElementById('backBtn');
-    const symphonyButtons = document.getElementById('symphonyButtons');
-    const movementButtons = document.getElementById('movementButtons');
-    const progressEl = document.getElementById('progress');
-    const scoreEl = document.getElementById('score');
-    const feedbackEl = document.getElementById('feedback');
-    const replayInfo = document.getElementById('replayInfo');
+    </main>
 
-    let player = null;
-    let apiReady = false;
-    let quiz = [];
-    let index = 0;
-    let score = 0;
-    let selectedS = null;
-    let selectedM = null;
-    let answered = false;
-    let playCount = 0;
-    let replayLimit = Infinity;
-    let stopTimer = null;
-    let stopWhenPlaying = false;
+    <script>
+        /* =================================================================
+           BEETHOVEN 37 MOVEMENTS DATASET (100% ORCHESTRA AUDIO via YOUTUBE)
+           ================================================================= */
+        const BEETHOVEN_37 = [
+            // Symphony No.1
+            { id: "1-1", sym: 1, mov: 1, key: "ハ長調", op: "Op.21", tempo: "Adagio molto - Allegro con brio", title: "第1番 ハ長調 第1楽章", desc: "序奏付きのアレグロ。伝統的なソナタ形式を踏襲しつつ革新的な和声で始まる。", ytId: "JAGip4nOsOg", start: 0 },
+            { id: "1-2", sym: 1, mov: 2, key: "ハ長調", op: "Op.21", tempo: "Andante cantabile con moto", title: "第1番 ハ長調 第2楽章", desc: "ヘ長調の優美なアンダンテ。フーガ風の対位法的な導入部が特徴。", ytId: "JAGip4nOsOg", start: 557 },
+            { id: "1-3", sym: 1, mov: 3, key: "ハ長調", op: "Op.21", tempo: "Menuetto: Allegro molto e vivace", title: "第1番 ハ長調 第3楽章", desc: "メヌエットと標記されているが、実質的にはベートーヴェン独特の快活なスケルツォ。", ytId: "JAGip4nOsOg", start: 978 },
+            { id: "1-4", sym: 1, mov: 4, key: "ハ長調", op: "Op.21", tempo: "Adagio - Allegro molto e vivace", title: "第1番 ハ長調 第4楽章", desc: "ユーモラスな序奏音階から一気にフィナーレへとなだれ込む躍動感あふれる終楽章。", ytId: "JAGip4nOsOg", start: 1190 },
 
-    function shuffle(arr) {
-      const a = [...arr];
-      for (let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [a[i], a[j]] = [a[j], a[i]];
-      }
-      return a;
-    }
+            // Symphony No.2
+            { id: "2-1", sym: 2, mov: 1, key: "ニ長調", op: "Op.36", tempo: "Adagio molto - Allegro con brio", title: "第2番 ニ長調 第1楽章", desc: "壮大な序奏に続く力強いニ長調のアレグロ。エネルギーあふれる曲。", ytId: "DPpxhmivhCQ", start: 9 },
+            { id: "2-2", sym: 2, mov: 2, key: "ニ長調", op: "Op.36", tempo: "Larghetto", title: "第2番 ニ長調 第2楽章", desc: "イ長調の伸びやかで旋律美に満ちた緩慢楽章。ベートーヴェン最も美しい緩楽章の一つ。", ytId: "DPpxhmivhCQ", start: 817 },
+            { id: "2-3", sym: 2, mov: 3, key: "ニ長調", op: "Op.36", tempo: "Scherzo: Allegro", title: "第2番 ニ長調 第3楽章", desc: "交響曲として初めて正式に「Scherzo（スケルツォ）」と明記された疾走感あふれる楽章。", ytId: "DPpxhmivhCQ", start: 1519 },
+            { id: "2-4", sym: 2, mov: 4, key: "ニ長調", op: "Op.36", tempo: "Allegro molto", title: "第2番 ニ長調 第4楽章", desc: "しゃっくりするような個性的で斬新な動機から始まるユーモアあふれるフィナーレ。", ytId: "DPpxhmivhCQ", start: 1828 },
 
-    function buildButtons() {
-      for (let i = 1; i <= 9; i++) {
-        const b = document.createElement('button');
-        b.className = 'answer-btn';
-        b.textContent = i;
-        b.addEventListener('click', () => selectSymphony(i, b));
-        symphonyButtons.appendChild(b);
-      }
-      for (let i = 1; i <= 5; i++) {
-        const b = document.createElement('button');
-        b.className = 'answer-btn';
-        b.textContent = i;
-        b.addEventListener('click', () => selectMovement(i, b));
-        movementButtons.appendChild(b);
-      }
-    }
+            // Symphony No.3 Eroica
+            { id: "3-1", sym: 3, mov: 1, key: "変ホ長調", op: "Op.55", tempo: "Allegro con brio", title: "第3番 変ホ長調「英雄」第1楽章", desc: "全合奏による2打撃の和音から始まる音楽史を塗り替えた巨大な第一楽章。", ytId: "DWwppYEEdcI", start: 36 },
+            { id: "3-2", sym: 3, mov: 2, key: "変ホ長調", op: "Op.55", tempo: "Marcia funebre: Adagio assai", title: "第3番 変ホ長調「英雄」第2楽章", desc: "「葬送行進曲」。ハ短調の重厚で深い哀悼の感情が表現された名楽章。", ytId: "DWwppYEEdcI", start: 1058 },
+            { id: "3-3", sym: 3, mov: 3, key: "変ホ長調", op: "Op.55", tempo: "Scherzo: Allegro vivace", title: "第3番 変ホ長調「英雄」第3楽章", desc: "弦楽器のさざ波のような刻みから始まり、トリオでのホルン3本による狩りのシグナルが印象的。", ytId: "DWwppYEEdcI", start: 1818 },
+            { id: "3-4", sym: 3, mov: 4, key: "変ホ長調", op: "Op.55", tempo: "Finale: Allegro molto", title: "第3番 変ホ長調「英雄」第4楽章", desc: "プロメテウスの創造物のテーマに基づく大変華やかな変奏曲形式のフィナーレ。", ytId: "DWwppYEEdcI", start: 2163 },
 
-    function selectSymphony(n, btn) {
-      if (answered) return;
-      selectedS = n;
-      [...symphonyButtons.children].forEach(x => x.classList.remove('selected'));
-      btn.classList.add('selected');
-      updateMovementAvailability();
-      updateAnswerEnabled();
-    }
+            // Symphony No.4
+            { id: "4-1", sym: 4, mov: 1, key: "変ロ長調", op: "Op.60", tempo: "Adagio - Allegro vivace", title: "第4番 変ロ長調 第1楽章", desc: "神秘的で暗い変ロ短調の序奏から、突然眩いばかりの歓喜へと展開する。", ytId: "1u8vBQrNJs8", start: 0 },
+            { id: "4-2", sym: 4, mov: 2, key: "変ロ長調", op: "Op.60", tempo: "Adagio", title: "第4番 変ロ長調 第2楽章", desc: "変ホ長調の美しい歌謡的楽章。付点リズムの鼓動のような伴奏が印象的。", ytId: "1u8vBQrNJs8", start: 695 },
+            { id: "4-3", sym: 4, mov: 3, key: "変ロ長調", op: "Op.60", tempo: "Allegro vivace", title: "第4番 変ロ長調 第3楽章", desc: "独創的なリズムの掛け合いが特徴のスケルツォ的な第3楽章。", ytId: "1u8vBQrNJs8", start: 1280 },
+            { id: "4-4", sym: 4, mov: 4, key: "変ロ長調", op: "Op.60", tempo: "Allegro ma non troppo", title: "第4番 変ロ長調 第4楽章", desc: "ファゴットをはじめオーケストラの技量が試される超高速のアレグロ。", ytId: "1u8vBQrNJs8", start: 1630 },
 
-    function selectMovement(n, btn) {
-      if (answered || btn.disabled) return;
-      selectedM = n;
-      [...movementButtons.children].forEach(x => x.classList.remove('selected'));
-      btn.classList.add('selected');
-      updateAnswerEnabled();
-    }
+            // Symphony No.5 Fate
+            { id: "5-1", sym: 5, mov: 1, key: "ハ短調", op: "Op.67", tempo: "Allegro con brio", title: "第5番 ハ短調「運命」第1楽章", desc: "「ジャジャジャジャーン」の超有名な運命の動機で始まる最も知名度の高い楽章。", ytId: "BpnuLKTMGyE", start: 0 },
+            { id: "5-2", sym: 5, mov: 2, key: "ハ短調", op: "Op.67", tempo: "Andante con moto", title: "第5番 ハ短調「運命」第2楽章", desc: "変イ長調の穏やかで荘厳な二重変奏曲。ヴィオラとチェロの旋律が流麗。", ytId: "BpnuLKTMGyE", start: 490 },
+            { id: "5-3", sym: 5, mov: 3, key: "ハ短調", op: "Op.67", tempo: "Scherzo: Allegro", title: "第5番 ハ短調「運命」第3楽章", desc: "低弦の不気味な問いかけとホルンの力強い運命動機。そのまま第4楽章へ切れ目なく続く。", ytId: "BpnuLKTMGyE", start: 1140 },
+            { id: "5-4", sym: 5, mov: 4, key: "ハ短調", op: "Op.67", tempo: "Allegro", title: "第5番 ハ短調「運命」第4楽章", desc: "ハ短調からハ長調へと勝利の歓喜が爆発する圧巻のフィナーレ。", ytId: "BpnuLKTMGyE", start: 1480 },
 
-    function updateMovementAvailability() {
-      const max = selectedS === 6 ? 5 : 4;
-      [...movementButtons.children].forEach((b, i) => {
-        const m = i + 1;
-        b.disabled = m > max;
-        if (b.disabled && selectedM === m) {
-          selectedM = null;
-          b.classList.remove('selected');
+            // Symphony No.6 Pastoral (5 Movements)
+            { id: "6-1", sym: 6, mov: 1, key: "ヘ長調", op: "Op.68", tempo: "Allegro ma non troppo", title: "第6番 ヘ長調「田園」第1楽章", desc: "「田舎に到着したときの愉快な感情の目覚め」。のどかで心地よいフレーズ。", ytId: "i66PId3uZ-4", start: 0 },
+            { id: "6-2", sym: 6, mov: 2, key: "ヘ長調", op: "Op.68", tempo: "Andante molto mosso", title: "第6番 ヘ長調「田園」第2楽章", desc: "「小川のほとりの風景」。水面のような伴奏と小鳥の鳴き声を描写。", ytId: "i66PId3uZ-4", start: 698 },
+            { id: "6-3", sym: 6, mov: 3, key: "ヘ長調", op: "Op.68", tempo: "Allegro", title: "第6番 ヘ長調「田園」第3楽章", desc: "「農民たちの楽しい集い」。舞曲風の賑やかなスケルツォ楽章。", ytId: "i66PId3uZ-4", start: 1425 },
+            { id: "6-4", sym: 6, mov: 4, key: "ヘ長調", op: "Op.68", tempo: "Allegro", title: "第6番 ヘ長調「田園」第4楽章", desc: "「雷雨、嵐」。突如として雷が鳴り響き嵐が荒れ狂う迫力の描写。", ytId: "i66PId3uZ-4", start: 1754 },
+            { id: "6-5", sym: 6, mov: 5, key: "ヘ長調", op: "Op.68", tempo: "Allegretto", title: "第6番 ヘ長調「田園」第5楽章", desc: "「牧人の歌。嵐の後の感謝の心」。のどかな牧歌から感動のフィナーレへ。", ytId: "i66PId3uZ-4", start: 1987 },
+
+            // Symphony No.7
+            { id: "7-1", sym: 7, mov: 1, key: "イ長調", op: "Op.92", tempo: "Poco sostenuto - Vivace", title: "第7番 イ長調 第1楽章", desc: "壮大な序奏から軽快なフルートの跳躍リズムが印象的なリズムの権化。", ytId: "H_5GaFEPUww", start: 59 },
+            { id: "7-2", sym: 7, mov: 2, key: "イ長調", op: "Op.92", tempo: "Allegretto", title: "第7番 イ長調 第2楽章", desc: "イ短調の有名な「アレグレット」。初演時にアンコールされた絶品のリズム行進曲。", ytId: "H_5GaFEPUww", start: 773 },
+            { id: "7-3", sym: 7, mov: 3, key: "イ長調", op: "Op.92", tempo: "Presto", title: "第7番 イ長調 第3楽章", desc: "ヘ長調の爆発的なスピード感を持つプレスト・スケルツォ。", ytId: "H_5GaFEPUww", start: 1275 },
+            { id: "7-4", sym: 7, mov: 4, key: "イ長調", op: "Op.92", tempo: "Allegro con brio", title: "第7番 イ長調 第4楽章", desc: "熱狂的で圧倒的なエネルギーに満ちた熱い終楽章。", ytId: "H_5GaFEPUww", start: 1728 },
+
+            // Symphony No.8
+            { id: "8-1", sym: 8, mov: 1, key: "ヘ長調", op: "Op.93", tempo: "Allegro vivace e con brio", title: "第8番 ヘ長調 第1楽章", desc: "序奏なしで全合奏のフォルテで軽快に始まるコンパクトで明朗な第1楽章。", ytId: "WcgxxciDdy0", start: 0 },
+            { id: "8-2", sym: 8, mov: 2, key: "ヘ長調", op: "Op.93", tempo: "Allegretto scherzando", title: "第8番 ヘ長調 第2楽章", desc: "時計のチクタク音がユーモラスな愛らしい楽章。", ytId: "WcgxxciDdy0", start: 514 },
+            { id: "8-3", sym: 8, mov: 3, key: "ヘ長調", op: "Op.93", tempo: "Tempo di Menuetto", title: "第8番 ヘ長調 第3楽章", desc: "古風で優雅なメヌエット。ホルンとクラリネットのトリオが美しい。", ytId: "WcgxxciDdy0", start: 739 },
+            { id: "8-4", sym: 8, mov: 4, key: "ヘ長調", op: "Op.93", tempo: "Allegro vivace", title: "第8番 ヘ長調 第4楽章", desc: "超高速のピアニシモ弦楽器の刻みから突如として異和音が鳴り響くフィナーレ。", ytId: "WcgxxciDdy0", start: 1010 },
+
+            // Symphony No.9 Choral
+            { id: "9-1", sym: 9, mov: 1, key: "ニ短調", op: "Op.125", tempo: "Allegro ma non troppo, un poco maestoso", title: "第9番 ニ短調「合唱付き」第1楽章", desc: "空虚5度のイントロから宇宙誕生のように壮大に主題が降臨する圧倒的第1楽章。", ytId: "PgnKjHvRAAY", start: 0 },
+            { id: "9-2", sym: 9, mov: 2, key: "ニ短調", op: "Op.125", tempo: "Molto vivace", title: "第9番 ニ短調「合唱付き」第2楽章", desc: "ティンパニのソロ打撃が強烈な刺激を与える迫力満点のスケルツォ楽章。", ytId: "PgnKjHvRAAY", start: 972 },
+            { id: "9-3", sym: 9, mov: 3, key: "ニ短調", op: "Op.125", tempo: "Adagio molto e cantabile", title: "第9番 ニ短調「合唱付き」第3楽章", desc: "変ロ長調の至高のアダージョ。人類の愛と天上の平和を感じさせる深遠な美しさ。", ytId: "PgnKjHvRAAY", start: 1701 },
+            { id: "9-4", sym: 9, mov: 4, key: "ニ短調", op: "Op.125", tempo: "Presto - Allegro assai", title: "第9番 ニ短調「合唱付き」第4楽章", desc: "歓喜の歌（An die Freude）！バリトン独唱・合唱が交響曲史上初めて導入された歴史的終楽章。", ytId: "PgnKjHvRAAY", start: 2517 }
+        ];
+
+        let currentQuestion = null;
+        let playDuration = 3.0; // Seconds
+        let currentScope = 'all';
+        let score = 0;
+        let totalAnswered = 0;
+        let streak = 0;
+        let isAnswered = false;
+        let isAudioPlaying = false;
+
+        let ytPlayer = null;
+        let isYtReady = false;
+        let playTimer = null;
+        let progressInterval = null;
+        let loadingWatchdog = null;
+
+        // Check if running from file:// protocol
+        if (window.location.protocol === 'file:') {
+            document.addEventListener('DOMContentLoaded', () => {
+                const warnEl = document.getElementById('file-protocol-warning');
+                if (warnEl) warnEl.classList.remove('hidden');
+            });
         }
-      });
-    }
 
-    function updateAnswerEnabled() {
-      answerBtn.disabled = !(selectedS && selectedM) || answered;
-    }
-
-    function resetSelections() {
-      selectedS = null;
-      selectedM = null;
-      answered = false;
-      playCount = 0;
-      [...symphonyButtons.children, ...movementButtons.children].forEach(b => {
-        b.classList.remove('selected');
-        b.disabled = false;
-      });
-      answerBtn.disabled = true;
-      answerBtn.classList.remove('hidden');
-      nextBtn.classList.add('hidden');
-      feedbackEl.className = 'feedback hidden';
-      feedbackEl.textContent = '';
-      updateReplayInfo();
-      updatePlayEnabled();
-    }
-
-    function updateReplayInfo() {
-      if (replayLimit === Infinity) replayInfo.textContent = '何度でも再生できます';
-      else replayInfo.textContent = `再生 ${playCount} / ${replayLimit} 回`;
-    }
-
-    function updatePlayEnabled() {
-      playBtn.disabled = !apiReady || playCount >= replayLimit || answered;
-    }
-
-    function currentTrack() { return quiz[index]; }
-
-    function loadQuestion() {
-      resetSelections();
-      progressEl.textContent = `${index + 1} / ${quiz.length}`;
-      scoreEl.textContent = `${score}点`;
-      if (player && apiReady) {
-        player.stopVideo();
-        player.cueVideoById({ videoId: currentTrack().v, startSeconds: currentTrack().start });
-      }
-    }
-
-    function playClip() {
-      if (!apiReady || playCount >= replayLimit || answered) return;
-      const t = currentTrack();
-      clearTimeout(stopTimer);
-      playCount++;
-      updateReplayInfo();
-      updatePlayEnabled();
-      stopWhenPlaying = true;
-      player.loadVideoById({ videoId: t.v, startSeconds: t.start });
-    }
-
-    function submitAnswer() {
-      if (!selectedS || !selectedM || answered) return;
-      answered = true;
-      clearTimeout(stopTimer);
-      stopWhenPlaying = false;
-      if (player) player.pauseVideo();
-      const t = currentTrack();
-      const correct = selectedS === t.s && selectedM === t.m;
-      if (correct) score++;
-      scoreEl.textContent = `${score}点`;
-      feedbackEl.className = `feedback ${correct ? 'good' : 'bad'}`;
-      feedbackEl.innerHTML = correct
-        ? `正解です。<span class="answer-line">交響曲第${t.s}番　第${t.m}楽章</span>`
-        : `惜しい。<span class="answer-line">正解：交響曲第${t.s}番　第${t.m}楽章</span>`;
-      answerBtn.classList.add('hidden');
-      nextBtn.classList.remove('hidden');
-      nextBtn.textContent = index === quiz.length - 1 ? '結果を見る' : '次の問題';
-      updatePlayEnabled();
-    }
-
-    function nextQuestion() {
-      if (!answered) return;
-      if (index < quiz.length - 1) {
-        index++;
-        loadQuestion();
-      } else {
-        showResult();
-      }
-    }
-
-    function showResult() {
-      if (player) player.stopVideo();
-      quizEl.classList.add('hidden');
-      resultEl.classList.remove('hidden');
-      document.getElementById('resultScore').textContent = `${score} / ${quiz.length}`;
-      const pct = Math.round(score / quiz.length * 100);
-      document.getElementById('resultSub').textContent = `正答率 ${pct}%`;
-      window.scrollTo({top:0, behavior:'smooth'});
-    }
-
-    function startQuiz() {
-      const count = Number(document.getElementById('questionCount').value);
-      const replay = document.getElementById('replayMode').value;
-      replayLimit = replay === 'unlimited' ? Infinity : Number(replay);
-      quiz = shuffle(TRACKS).slice(0, count);
-      index = 0;
-      score = 0;
-      setupEl.classList.add('hidden');
-      resultEl.classList.add('hidden');
-      quizEl.classList.remove('hidden');
-      loadQuestion();
-      window.scrollTo({top:0, behavior:'smooth'});
-    }
-
-    function goSetup() {
-      clearTimeout(stopTimer);
-      if (player) player.stopVideo();
-      resultEl.classList.add('hidden');
-      quizEl.classList.add('hidden');
-      setupEl.classList.remove('hidden');
-      window.scrollTo({top:0, behavior:'smooth'});
-    }
-
-    window.onYouTubeIframeAPIReady = function() {
-      player = new YT.Player('player', {
-        width: '560',
-        height: '315',
-        playerVars: {
-          controls: 0,
-          rel: 0,
-          playsinline: 1,
-          fs: 0,
-          disablekb: 1
-        },
-        events: {
-          onReady: () => {
-            apiReady = true;
-            updatePlayEnabled();
-            if (quiz.length) loadQuestion();
-          },
-          onStateChange: (event) => {
-            if (event.data === YT.PlayerState.PLAYING && stopWhenPlaying) {
-              stopWhenPlaying = false;
-              clearTimeout(stopTimer);
-              stopTimer = setTimeout(() => {
-                if (player && typeof player.pauseVideo === 'function') player.pauseVideo();
-              }, 3000);
+        // Load YouTube API
+        function loadYtScript() {
+            if (window.YT && window.YT.Player) {
+                onYouTubeIframeAPIReady();
+                return;
             }
-          }
+            const tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api";
+            tag.onerror = function() {
+                const prepStatus = document.getElementById('prep-status');
+                if (prepStatus) prepStatus.innerHTML = `<span class="text-rose-400"><i class="fa-solid fa-circle-xmark mr-1"></i>YouTube APIロード失敗 (ネットワーク制限)</span>`;
+            };
+            const firstScriptTag = document.getElementsByTagName('script')[0];
+            if (firstScriptTag && firstScriptTag.parentNode) {
+                firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+            } else {
+                document.head.appendChild(tag);
+            }
         }
-      });
-    };
 
-    buildButtons();
-    startBtn.addEventListener('click', startQuiz);
-    playBtn.addEventListener('click', playClip);
-    answerBtn.addEventListener('click', submitAnswer);
-    nextBtn.addEventListener('click', nextQuestion);
-    retryBtn.addEventListener('click', startQuiz);
-    backBtn.addEventListener('click', goSetup);
+        window.onYouTubeIframeAPIReady = function() {
+            const hostOrigin = (window.location.origin && window.location.origin !== 'null') 
+                ? window.location.origin 
+                : 'https://www.youtube.com';
 
-    const tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    document.head.appendChild(tag);
-  </script>
+            ytPlayer = new YT.Player('yt-player', {
+                height: '160',
+                width: '100%',
+                videoId: 'JAGip4nOsOg',
+                playerVars: {
+                    'autoplay': 0,
+                    'controls': 1,
+                    'playsinline': 1,
+                    'rel': 0,
+                    'modestbranding': 1,
+                    'enablejsapi': 1,
+                    'origin': hostOrigin
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange,
+                    'onError': onPlayerError
+                }
+            });
+        };
+
+        function onPlayerReady(event) {
+            isYtReady = true;
+            const prepStatus = document.getElementById('prep-status');
+            if (prepStatus) {
+                prepStatus.innerHTML = `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-circle-check mr-1"></i>YouTube音源プレイヤー準備完了！</span>`;
+            }
+        }
+
+        function onPlayerError(event) {
+            console.warn("YouTube Player Error Code:", event.data);
+            const warningEl = document.getElementById('loading-warning');
+            const warningText = document.getElementById('loading-warning-text');
+            if (warningEl && warningText) {
+                warningEl.classList.remove('hidden');
+                if (event.data === 150 || event.data === 101 || event.data === 153) {
+                    warningText.innerHTML = `<strong>YouTube埋め込み制限 (エラー153)</strong><br>file:// 直開きでは再生できません。GitHub Pages等からアクセスしてください。`;
+                } else {
+                    warningText.innerText = `動画の読み込みに失敗しました (${event.data})。直接動画を開いて再生してください。`;
+                }
+            }
+            stopAudio();
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.PLAYING) {
+                if (loadingWatchdog) clearTimeout(loadingWatchdog);
+                document.getElementById('loading-warning').classList.add('hidden');
+
+                if (isAudioPlaying) {
+                    startPlaybackTimer();
+                }
+            } else if (event.data === YT.PlayerState.ENDED) {
+                stopAudio();
+            }
+        }
+
+        loadYtScript();
+
+        window.onload = function() {
+            setDuration(3.0);
+            renderLibrary();
+        };
+
+        function switchTab(tabName) {
+            ['start', 'quiz', 'library', 'settings'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`nav-${t}`).className = "px-3 py-2 rounded-lg font-semibold transition-all text-stone-300 hover:text-white";
+            });
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            document.getElementById(`nav-${tabName}`).className = "px-3 py-2 rounded-lg font-semibold transition-all bg-gold-500 text-stone-950 shadow";
+            
+            stopAudio();
+        }
+
+        function initAndStartQuiz() {
+            if (isYtReady && ytPlayer && typeof ytPlayer.playVideo === 'function') {
+                try {
+                    ytPlayer.playVideo();
+                    setTimeout(() => {
+                        ytPlayer.pauseVideo();
+                    }, 300);
+                } catch(e) {}
+            }
+            switchTab('quiz');
+            nextQuestion();
+        }
+
+        function getFilteredDataset() {
+            if (currentScope === 'famous') {
+                return BEETHOVEN_37.filter(item => item.mov === 1 || item.sym === 5 || item.sym === 6 || (item.sym === 9 && item.mov === 4));
+            } else if (currentScope.startsWith('symphony_')) {
+                const symNum = parseInt(currentScope.replace('symphony_', ''));
+                return BEETHOVEN_37.filter(item => item.sym === symNum);
+            }
+            return BEETHOVEN_37;
+        }
+
+        function nextQuestion() {
+            stopAudio();
+            isAnswered = false;
+            
+            document.getElementById('feedback-panel').classList.add('hidden');
+            document.getElementById('loading-warning').classList.add('hidden');
+
+            const dataset = getFilteredDataset();
+            const randomIndex = Math.floor(Math.random() * dataset.length);
+            currentQuestion = dataset[randomIndex];
+
+            const options = [currentQuestion];
+            while (options.length < 4) {
+                const randomPiece = BEETHOVEN_37[Math.floor(Math.random() * BEETHOVEN_37.length)];
+                if (!options.some(o => o.id === randomPiece.id)) {
+                    options.push(randomPiece);
+                }
+            }
+
+            options.sort(() => Math.random() - 0.5);
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "p-4 rounded-xl border border-stone-700 bg-stone-900/90 text-left hover:border-gold-500 hover:bg-stone-800 transition font-medium flex items-center justify-between group shadow";
+                btn.onclick = () => checkAnswer(opt, btn);
+                btn.innerHTML = `
+                    <div>
+                        <span class="text-xs text-gold-500 font-bold block">${opt.op}</span>
+                        <span class="text-sm font-bold text-stone-100 group-hover:text-gold-400">${opt.title}</span>
+                        <span class="text-[11px] text-stone-400 block mt-0.5 truncate max-w-[200px] sm:max-w-xs">${opt.tempo}</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xs text-stone-600 group-hover:text-gold-400 transition"></i>
+                `;
+                container.appendChild(btn);
+            });
+
+            document.getElementById('q-number').innerText = totalAnswered + 1;
+        }
+
+        function playAudioIntro() {
+            stopAudio();
+            if (!currentQuestion) return;
+
+            isAudioPlaying = true;
+            const btnRing = document.getElementById('play-ring');
+            const playIcon = document.getElementById('play-icon');
+            const playLabel = document.getElementById('play-label');
+
+            if (btnRing) btnRing.classList.remove('hidden');
+            if (playIcon) playIcon.className = "fa-solid fa-spinner text-3xl sm:text-4xl ml-0 animate-spin";
+            if (playLabel) playLabel.innerText = "読込中";
+
+            if (loadingWatchdog) clearTimeout(loadingWatchdog);
+            loadingWatchdog = setTimeout(() => {
+                if (isAudioPlaying && playLabel && playLabel.innerText === "読込中") {
+                    document.getElementById('loading-warning').classList.remove('hidden');
+                    if (playIcon) playIcon.className = "fa-solid fa-circle-exclamation text-3xl text-amber-400";
+                    if (playLabel) playLabel.innerText = "手動再生";
+                }
+            }, 6000);
+
+            if (isYtReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
+                try {
+                    ytPlayer.loadVideoById({
+                        videoId: currentQuestion.ytId,
+                        startSeconds: currentQuestion.start
+                    });
+                } catch(err) {
+                    console.warn("Play Trigger Error:", err);
+                }
+            } else {
+                document.getElementById('loading-warning').classList.remove('hidden');
+                stopAudio();
+            }
+        }
+
+        function startPlaybackTimer() {
+            const playIcon = document.getElementById('play-icon');
+            const playLabel = document.getElementById('play-label');
+            const progressBar = document.getElementById('audio-progress');
+
+            if (playIcon) playIcon.className = "fa-solid fa-volume-high text-3xl sm:text-4xl ml-0 animate-pulse";
+            if (playLabel) playLabel.innerText = "演奏中";
+
+            const startTime = Date.now();
+            if (progressInterval) clearInterval(progressInterval);
+            
+            progressInterval = setInterval(() => {
+                const elapsed = (Date.now() - startTime) / 1000;
+                const pct = Math.min((elapsed / playDuration) * 100, 100);
+                if (progressBar) progressBar.style.width = `${pct}%`;
+            }, 40);
+
+            if (playTimer) clearTimeout(playTimer);
+            playTimer = setTimeout(() => {
+                stopAudio();
+            }, playDuration * 1000);
+        }
+
+        function stopAudio() {
+            isAudioPlaying = false;
+
+            if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
+                try {
+                    ytPlayer.pauseVideo();
+                } catch(e) {}
+            }
+            if (playTimer) clearTimeout(playTimer);
+            if (progressInterval) clearInterval(progressInterval);
+            if (loadingWatchdog) clearTimeout(loadingWatchdog);
+
+            const btnRing = document.getElementById('play-ring');
+            if (btnRing) btnRing.classList.add('hidden');
+            const playIcon = document.getElementById('play-icon');
+            if (playIcon) playIcon.className = "fa-solid fa-play text-3xl sm:text-4xl ml-1";
+            const playLabel = document.getElementById('play-label');
+            if (playLabel) playLabel.innerText = "再生";
+            const progressBar = document.getElementById('audio-progress');
+            if (progressBar) progressBar.style.width = '0%';
+        }
+
+        function checkAnswer(selectedOpt, btnElement) {
+            if (isAnswered) return;
+            isAnswered = true;
+            stopAudio();
+
+            totalAnswered++;
+            const isCorrect = (selectedOpt.id === currentQuestion.id);
+
+            const feedbackPanel = document.getElementById('feedback-panel');
+            const feedbackIcon = document.getElementById('feedback-icon-container');
+            const feedbackTitle = document.getElementById('feedback-title');
+            const feedbackPieceName = document.getElementById('feedback-piece-name');
+            const feedbackDesc = document.getElementById('feedback-desc');
+            const feedbackYtLink = document.getElementById('feedback-yt-link');
+
+            feedbackPanel.classList.remove('hidden');
+
+            if (isCorrect) {
+                score++;
+                streak++;
+                btnElement.classList.add('bg-emerald-900/60', 'border-emerald-500', 'text-emerald-200');
+                feedbackPanel.className = "mt-6 p-4 sm:p-5 rounded-xl border border-emerald-500/50 bg-emerald-950/40 text-left";
+                feedbackIcon.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i>`;
+                feedbackTitle.innerText = "正解！素晴らしい！";
+                feedbackTitle.className = "font-bold text-lg text-emerald-400";
+            } else {
+                streak = 0;
+                btnElement.classList.add('bg-rose-900/60', 'border-rose-500', 'text-rose-200');
+                feedbackPanel.className = "mt-6 p-4 sm:p-5 rounded-xl border border-rose-500/50 bg-rose-950/40 text-left";
+                feedbackIcon.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-400"></i>`;
+                feedbackTitle.innerText = "残念！不正解...";
+                feedbackTitle.className = "font-bold text-lg text-rose-400";
+            }
+
+            feedbackPieceName.innerText = `${currentQuestion.title} (${currentQuestion.key} ${currentQuestion.op})`;
+            feedbackDesc.innerHTML = `<strong>【速度・指示】</strong> ${currentQuestion.tempo}<br>${currentQuestion.desc}`;
+            feedbackYtLink.href = `https://www.youtube.com/watch?v=${currentQuestion.ytId}&t=${currentQuestion.start}s`;
+
+            document.getElementById('score-text').innerText = `${score} / ${totalAnswered}`;
+            document.getElementById('streak-text').innerText = `🔥 ${streak}`;
+        }
+
+        function resetStats() {
+            score = 0;
+            totalAnswered = 0;
+            streak = 0;
+            document.getElementById('score-text').innerText = "0 / 0";
+            document.getElementById('streak-text').innerText = "🔥 0";
+            nextQuestion();
+        }
+
+        function setDuration(sec) {
+            playDuration = sec;
+            document.querySelectorAll('.dur-btn').forEach(btn => {
+                btn.classList.remove('border-gold-500', 'bg-stone-800', 'text-gold-400');
+            });
+            const activeBtn = document.getElementById(`dur-${Math.floor(sec)}`);
+            if (activeBtn) {
+                activeBtn.classList.add('border-gold-500', 'bg-stone-800', 'text-gold-400');
+            }
+            document.getElementById('difficulty-badge').innerHTML = `<i class="fa-solid fa-stopwatch mr-1"></i>${sec.toFixed(1)}秒`;
+        }
+
+        function updateScope() {
+            currentScope = document.getElementById('setting-scope').value;
+            nextQuestion();
+        }
+
+        function renderLibrary() {
+            const filterVal = document.getElementById('library-filter').value;
+            const container = document.getElementById('library-list');
+            container.innerHTML = '';
+
+            const list = (filterVal === 'all') 
+                ? BEETHOVEN_37 
+                : BEETHOVEN_37.filter(item => item.sym === parseInt(filterVal));
+
+            list.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "glass-card p-4 rounded-xl flex flex-col gap-3 hover:border-gold-500/50 transition";
+                card.innerHTML = `
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gold-500/20 text-gold-400 border border-gold-500/30">${item.op}</span>
+                                <h3 class="font-bold text-sm text-stone-100">${item.title}</h3>
+                            </div>
+                            <p class="text-xs text-stone-400 mt-1 font-serif">${item.tempo} (${item.key})</p>
+                            <p class="text-[11px] text-stone-500 mt-1 leading-relaxed">${item.desc}</p>
+                        </div>
+                        <a href="https://www.youtube.com/watch?v=${item.ytId}&t=${item.start}s" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-full bg-stone-800 hover:bg-gold-500 hover:text-black text-gold-400 flex items-center justify-center transition shrink-0 shadow" title="YouTubeで該当秒数から再生">
+                            <i class="fa-brands fa-youtube text-lg"></i>
+                        </a>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+    </script>
 </body>
 </html>
