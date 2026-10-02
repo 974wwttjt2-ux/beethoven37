@@ -193,25 +193,44 @@
                     </div>
 
                     <!-- Progress Bar for Audio Cutoff -->
-                    <div class="w-full max-w-xs bg-stone-900 rounded-full h-2.5 mt-2 overflow-hidden border border-stone-800 relative">
-                        <div id="audio-progress" class="bg-gold-500 h-full w-0 transition-all duration-75"></div>
+                <div class="w-full max-w-xs bg-stone-900 rounded-full h-2.5 mt-2 overflow-hidden border border-stone-800 relative">
+                    <div id="audio-progress" class="bg-gold-500 h-full w-0 transition-all duration-75"></div>
+                </div>
+            </div>
+
+            <!-- Embedded Orchestra Audio Player Box (Hidden during question, shown on feedback) -->
+            <div id="yt-player-wrapper" class="hidden w-full max-w-sm mx-auto my-4 rounded-xl overflow-hidden bg-black border border-stone-800 relative">
+                <div id="yt-player-container" class="w-full h-40 flex items-center justify-center">
+                    <div id="yt-player"></div>
+                </div>
+            </div>
+
+            <!-- Two-Step Answer Selection Area -->
+            <div id="answer-selection-container" class="space-y-5 mt-6">
+                <!-- Step 1: Symphony Selection -->
+                <div class="bg-stone-950/60 p-4 rounded-2xl border border-stone-800 text-left space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-gold-400 uppercase tracking-wider">Step 1. 交響曲を選択</span>
+                        <span id="selected-sym-label" class="text-xs text-stone-400 font-semibold">未選択</span>
+                    </div>
+                    <div id="symphony-buttons" class="grid grid-cols-3 gap-2">
+                        <!-- Injected via JS -->
                     </div>
                 </div>
 
-                <!-- Embedded Orchestra Audio Player Box -->
-                <div id="yt-player-wrapper" class="w-full max-w-sm mx-auto my-4 rounded-xl overflow-hidden bg-black border border-stone-800 relative">
-                    <div id="yt-player-container" class="w-full h-40 flex items-center justify-center">
-                        <div id="yt-player"></div>
+                <!-- Step 2: Movement Selection -->
+                <div id="movement-section" class="bg-stone-950/60 p-4 rounded-2xl border border-stone-800 text-left space-y-3 opacity-50 pointer-events-none transition-all">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-gold-400 uppercase tracking-wider">Step 2. 楽章を選択して回答</span>
+                    </div>
+                    <div id="movement-buttons" class="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                        <!-- Injected via JS -->
                     </div>
                 </div>
+            </div>
 
-                <!-- Answer Options Grid -->
-                <div id="options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
-                    <!-- Dynamic Answer Buttons -->
-                </div>
-
-                <!-- Feedback Panel -->
-                <div id="feedback-panel" class="hidden mt-6 p-4 sm:p-5 rounded-xl border text-left transition-all duration-300">
+            <!-- Feedback Panel -->
+            <div id="feedback-panel" class="hidden mt-6 p-4 sm:p-5 rounded-xl border text-left transition-all duration-300">
                     <div class="flex items-start gap-3">
                         <div id="feedback-icon-container" class="text-2xl"></div>
                         <div class="flex-1">
@@ -353,7 +372,20 @@
             { id: "9-4", sym: 9, mov: 4, key: "ニ短調", op: "Op.125", tempo: "Presto - Allegro assai", title: "第9番 ニ短調「合唱付き」第4楽章", desc: "歓喜の歌（An die Freude）！バリトン独唱・合唱が交響曲史上初めて導入された歴史的終楽章。", ytId: "PgnKjHvRAAY", start: 2517 }
         ];
 
+        const SYMPHONY_NAMES = {
+            1: "第1番",
+            2: "第2番",
+            3: "第3番「英雄」",
+            4: "第4番",
+            5: "第5番「運命」",
+            6: "第6番「田園」",
+            7: "第7番",
+            8: "第8番",
+            9: "第9番「合唱」"
+        };
+
         let currentQuestion = null;
+        let selectedSymphony = null;
         let playDuration = 3.0; // Seconds
         let currentScope = 'all';
         let score = 0;
@@ -502,133 +534,95 @@
         function nextQuestion() {
             stopAudio();
             isAnswered = false;
+            selectedSymphony = null;
             
             document.getElementById('feedback-panel').classList.add('hidden');
             document.getElementById('loading-warning').classList.add('hidden');
+            document.getElementById('yt-player-wrapper').classList.add('hidden'); // Hide player during question
 
             const dataset = getFilteredDataset();
             const randomIndex = Math.floor(Math.random() * dataset.length);
             currentQuestion = dataset[randomIndex];
 
-            const options = [currentQuestion];
-            while (options.length < 4) {
-                const randomPiece = BEETHOVEN_37[Math.floor(Math.random() * BEETHOVEN_37.length)];
-                if (!options.some(o => o.id === randomPiece.id)) {
-                    options.push(randomPiece);
-                }
-            }
-
-            options.sort(() => Math.random() - 0.5);
-
-            const container = document.getElementById('options-container');
-            container.innerHTML = '';
-            options.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.className = "p-4 rounded-xl border border-stone-700 bg-stone-900/90 text-left hover:border-gold-500 hover:bg-stone-800 transition font-medium flex items-center justify-between group shadow";
-                btn.onclick = () => checkAnswer(opt, btn);
-                btn.innerHTML = `
-                    <div>
-                        <span class="text-xs text-gold-500 font-bold block">${opt.op}</span>
-                        <span class="text-sm font-bold text-stone-100 group-hover:text-gold-400">${opt.title}</span>
-                        <span class="text-[11px] text-stone-400 block mt-0.5 truncate max-w-[200px] sm:max-w-xs">${opt.tempo}</span>
-                    </div>
-                    <i class="fa-solid fa-chevron-right text-xs text-stone-600 group-hover:text-gold-400 transition"></i>
-                `;
-                container.appendChild(btn);
-            });
+            renderSymphonyButtons();
+            renderMovementButtons();
 
             document.getElementById('q-number').innerText = totalAnswered + 1;
         }
 
-        function playAudioIntro() {
-            stopAudio();
-            if (!currentQuestion) return;
+        function renderSymphonyButtons() {
+            const container = document.getElementById('symphony-buttons');
+            container.innerHTML = '';
+            document.getElementById('selected-sym-label').innerText = "未選択";
 
-            isAudioPlaying = true;
-            const btnRing = document.getElementById('play-ring');
-            const playIcon = document.getElementById('play-icon');
-            const playLabel = document.getElementById('play-label');
+            for (let i = 1; i <= 9; i++) {
+                const btn = document.createElement('button');
+                btn.id = `sym-btn-${i}`;
+                btn.disabled = isAnswered;
+                btn.className = "py-2.5 px-2 rounded-xl border border-stone-700 bg-stone-900 text-stone-200 text-xs font-bold hover:border-gold-500 hover:text-gold-400 transition text-center shadow";
+                btn.onclick = () => selectSymphony(i);
+                btn.innerText = SYMPHONY_NAMES[i];
+                container.appendChild(btn);
+            }
+        }
 
-            if (btnRing) btnRing.classList.remove('hidden');
-            if (playIcon) playIcon.className = "fa-solid fa-spinner text-3xl sm:text-4xl ml-0 animate-spin";
-            if (playLabel) playLabel.innerText = "読込中";
+        function selectSymphony(symNum) {
+            if (isAnswered) return;
+            selectedSymphony = symNum;
 
-            if (loadingWatchdog) clearTimeout(loadingWatchdog);
-            loadingWatchdog = setTimeout(() => {
-                if (isAudioPlaying && playLabel && playLabel.innerText === "読込中") {
-                    document.getElementById('loading-warning').classList.remove('hidden');
-                    if (playIcon) playIcon.className = "fa-solid fa-circle-exclamation text-3xl text-amber-400";
-                    if (playLabel) playLabel.innerText = "手動再生";
+            document.getElementById('selected-sym-label').innerText = SYMPHONY_NAMES[symNum];
+
+            // Highlight selected symphony button
+            for (let i = 1; i <= 9; i++) {
+                const btn = document.getElementById(`sym-btn-${i}`);
+                if (i === symNum) {
+                    btn.className = "py-2.5 px-2 rounded-xl border-2 border-gold-500 bg-gold-500/20 text-gold-400 text-xs font-bold transition text-center shadow";
+                } else {
+                    btn.className = "py-2.5 px-2 rounded-xl border border-stone-800 bg-stone-950/80 text-stone-400 text-xs font-medium hover:border-stone-700 transition text-center opacity-70";
                 }
-            }, 6000);
+            }
 
-            if (isYtReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
-                try {
-                    ytPlayer.loadVideoById({
-                        videoId: currentQuestion.ytId,
-                        startSeconds: currentQuestion.start
-                    });
-                } catch(err) {
-                    console.warn("Play Trigger Error:", err);
-                }
-            } else {
-                document.getElementById('loading-warning').classList.remove('hidden');
-                stopAudio();
+            // Enable movement section
+            const movSection = document.getElementById('movement-section');
+            movSection.classList.remove('opacity-50', 'pointer-events-none');
+
+            renderMovementButtons();
+        }
+
+        function renderMovementButtons() {
+            const container = document.getElementById('movement-buttons');
+            container.innerHTML = '';
+
+            const maxMov = (selectedSymphony === 6) ? 5 : 4;
+
+            for (let m = 1; m <= maxMov; m++) {
+                const btn = document.createElement('button');
+                btn.disabled = isAnswered || !selectedSymphony;
+                btn.className = "py-3 px-2 rounded-xl border border-stone-700 bg-stone-900 text-stone-100 text-xs font-bold hover:border-gold-500 hover:bg-stone-800 hover:text-gold-400 transition text-center shadow";
+                btn.onclick = () => checkAnswer(selectedSymphony, m, btn);
+                btn.innerText = `第${m}楽章`;
+                container.appendChild(btn);
             }
         }
 
         function startPlaybackTimer() {
-            const playIcon = document.getElementById('play-icon');
-            const playLabel = document.getElementById('play-label');
-            const progressBar = document.getElementById('audio-progress');
-
-            if (playIcon) playIcon.className = "fa-solid fa-volume-high text-3xl sm:text-4xl ml-0 animate-pulse";
-            if (playLabel) playLabel.innerText = "演奏中";
-
-            const startTime = Date.now();
-            if (progressInterval) clearInterval(progressInterval);
-            
-            progressInterval = setInterval(() => {
-                const elapsed = (Date.now() - startTime) / 1000;
-                const pct = Math.min((elapsed / playDuration) * 100, 100);
-                if (progressBar) progressBar.style.width = `${pct}%`;
-            }, 40);
-
-            if (playTimer) clearTimeout(playTimer);
-            playTimer = setTimeout(() => {
-                stopAudio();
-            }, playDuration * 1000);
-        }
-
-        function stopAudio() {
-            isAudioPlaying = false;
-
-            if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
-                try {
-                    ytPlayer.pauseVideo();
-                } catch(e) {}
-            }
-            if (playTimer) clearTimeout(playTimer);
-            if (progressInterval) clearInterval(progressInterval);
-            if (loadingWatchdog) clearTimeout(loadingWatchdog);
-
-            const btnRing = document.getElementById('play-ring');
-            if (btnRing) btnRing.classList.add('hidden');
-            const playIcon = document.getElementById('play-icon');
-            if (playIcon) playIcon.className = "fa-solid fa-play text-3xl sm:text-4xl ml-1";
-            const playLabel = document.getElementById('play-label');
-            if (playLabel) playLabel.innerText = "再生";
-            const progressBar = document.getElementById('audio-progress');
-            if (progressBar) progressBar.style.width = '0%';
-        }
-
-        function checkAnswer(selectedOpt, btnElement) {
-            if (isAnswered) return;
+        function checkAnswer(userSym, userMov, btnElement) {
+            if (isAnswered || !userSym) return;
             isAnswered = true;
             stopAudio();
 
             totalAnswered++;
-            const isCorrect = (selectedOpt.id === currentQuestion.id);
+            const isCorrect = (userSym === currentQuestion.sym && userMov === currentQuestion.mov);
+
+            // Show YouTube player now that answer is given
+            document.getElementById('yt-player-wrapper').classList.remove('hidden');
+
+            // Disable all buttons
+            for (let i = 1; i <= 9; i++) {
+                const btn = document.getElementById(`sym-btn-${i}`);
+                if (btn) btn.disabled = true;
+            }
+            document.querySelectorAll('#movement-buttons button').forEach(b => b.disabled = true);
 
             const feedbackPanel = document.getElementById('feedback-panel');
             const feedbackIcon = document.getElementById('feedback-icon-container');
@@ -642,22 +636,22 @@
             if (isCorrect) {
                 score++;
                 streak++;
-                btnElement.classList.add('bg-emerald-900/60', 'border-emerald-500', 'text-emerald-200');
+                btnElement.classList.add('bg-emerald-900/80', 'border-emerald-500', 'text-emerald-200');
                 feedbackPanel.className = "mt-6 p-4 sm:p-5 rounded-xl border border-emerald-500/50 bg-emerald-950/40 text-left";
                 feedbackIcon.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i>`;
                 feedbackTitle.innerText = "正解！素晴らしい！";
                 feedbackTitle.className = "font-bold text-lg text-emerald-400";
             } else {
                 streak = 0;
-                btnElement.classList.add('bg-rose-900/60', 'border-rose-500', 'text-rose-200');
+                btnElement.classList.add('bg-rose-900/80', 'border-rose-500', 'text-rose-200');
                 feedbackPanel.className = "mt-6 p-4 sm:p-5 rounded-xl border border-rose-500/50 bg-rose-950/40 text-left";
                 feedbackIcon.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-400"></i>`;
-                feedbackTitle.innerText = "残念！不正解...";
+                feedbackTitle.innerText = `残念！正解は ${currentQuestion.title}`;
                 feedbackTitle.className = "font-bold text-lg text-rose-400";
             }
 
             feedbackPieceName.innerText = `${currentQuestion.title} (${currentQuestion.key} ${currentQuestion.op})`;
-            feedbackDesc.innerHTML = `<strong>【速度・指示】</strong> ${currentQuestion.tempo}<br>${currentQuestion.desc}`;
+            feedbackDesc.innerHTML = `<strong>【あなたの回答】</strong> ${SYMPHONY_NAMES[userSym]} 第${userMov}楽章<br><strong>【速度・指示】</strong> ${currentQuestion.tempo}<br>${currentQuestion.desc}`;
             feedbackYtLink.href = `https://www.youtube.com/watch?v=${currentQuestion.ytId}&t=${currentQuestion.start}s`;
 
             document.getElementById('score-text').innerText = `${score} / ${totalAnswered}`;
