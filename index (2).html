@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="ベートーヴェン交響曲全37楽章・3秒イントロクイズ" />
+  <title>Beethoven 37 — 3秒イントロクイズ</title>
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --card: #fffdf8;
+      --ink: #171717;
+      --muted: #6b665d;
+      --line: #d9d2c5;
+      --accent: #5c4033;
+      --accent2: #8c6b52;
+      --good: #1f7a4d;
+      --bad: #b0443b;
+      --shadow: 0 16px 40px rgba(45, 35, 24, .10);
+      --radius: 22px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(140,107,82,.10), transparent 28%),
+        radial-gradient(circle at 90% 15%, rgba(92,64,51,.08), transparent 24%),
+        var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+    button, select { font: inherit; }
+    .wrap { width: min(980px, calc(100% - 28px)); margin: 0 auto; padding: 28px 0 54px; }
+    header { display:flex; align-items:flex-end; justify-content:space-between; gap:18px; margin-bottom:20px; }
+    h1 { margin:0; font-size: clamp(30px, 5vw, 52px); letter-spacing:-.035em; line-height:1; }
+    .subtitle { margin:8px 0 0; color:var(--muted); font-weight:600; }
+    .badge { background:var(--ink); color:white; border-radius:999px; padding:8px 12px; font-size:13px; white-space:nowrap; }
+    .card { background:rgba(255,253,248,.96); border:1px solid rgba(217,210,197,.9); border-radius:var(--radius); box-shadow:var(--shadow); padding:clamp(18px, 3vw, 30px); }
+    .hidden { display:none !important; }
+    .setup-grid { display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
+    .field label { display:block; font-weight:800; margin-bottom:8px; }
+    select { width:100%; border:1px solid var(--line); background:white; border-radius:14px; padding:13px 14px; }
+    .note { color:var(--muted); line-height:1.7; font-size:14px; }
+    .primary, .secondary, .answer-btn, .play-btn {
+      border:0; border-radius:14px; cursor:pointer; transition:.15s transform, .15s opacity, .15s background;
+    }
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity:.45; cursor:not-allowed; transform:none; }
+    .primary { background:var(--ink); color:white; padding:14px 20px; font-weight:800; }
+    .secondary { background:#eee8de; color:var(--ink); padding:12px 17px; font-weight:800; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px; }
+    .progress { font-weight:900; letter-spacing:.02em; }
+    .score { color:var(--muted); font-weight:800; }
+    .question-title { font-size:clamp(22px,4vw,34px); margin:8px 0 18px; }
+    .play-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:18px; }
+    .play-btn { background:var(--accent); color:white; padding:15px 22px; font-weight:900; font-size:18px; }
+    .play-btn::before { content:"▶"; margin-right:8px; }
+    .timer-pill { color:var(--muted); background:#f1ece3; padding:9px 12px; border-radius:999px; font-size:13px; font-weight:800; }
+    .player-shell { width:min(100%, 560px); aspect-ratio:16/9; margin:0 auto 22px; border-radius:18px; overflow:hidden; background:#000; border:1px solid #111; }
+    #player { width:100%; height:100%; }
+    .warning { font-size:12px; line-height:1.5; color:var(--muted); text-align:center; margin:-10px 0 22px; }
+    .answer-area h3 { margin:0 0 10px; font-size:15px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+    .button-grid { display:grid; grid-template-columns:repeat(9,1fr); gap:8px; margin-bottom:18px; }
+    .movement-grid { grid-template-columns:repeat(5,1fr); max-width:520px; }
+    .answer-btn { padding:12px 8px; background:white; border:1px solid var(--line); font-weight:900; }
+    .answer-btn.selected { background:var(--ink); color:white; border-color:var(--ink); }
+    .submit-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:8px; }
+    .feedback { margin-top:18px; border-radius:16px; padding:16px 18px; font-weight:800; line-height:1.55; }
+    .feedback.good { background:#e8f5ed; color:var(--good); border:1px solid #b9dfc9; }
+    .feedback.bad { background:#faecea; color:var(--bad); border:1px solid #e8c0bb; }
+    .answer-line { color:var(--ink); display:block; margin-top:5px; font-weight:900; }
+    .result-score { font-size:clamp(46px,10vw,84px); font-weight:950; letter-spacing:-.05em; margin:8px 0; }
+    .result-sub { color:var(--muted); font-size:18px; font-weight:700; }
+    .result-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:22px; }
+    footer { margin-top:18px; color:var(--muted); font-size:12px; line-height:1.6; }
+    @media (max-width:720px) {
+      .setup-grid { grid-template-columns:1fr; }
+      .button-grid { grid-template-columns:repeat(5,1fr); }
+      header { align-items:flex-start; flex-direction:column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <div>
+        <h1>Beethoven 37</h1>
+        <p class="subtitle">交響曲全37楽章・3秒イントロクイズ</p>
+      </div>
+      <div class="badge">YouTube IFrame Player API</div>
+    </header>
+
+    <section id="setup" class="card">
+      <h2 style="margin-top:0">クイズ設定</h2>
+      <div class="setup-grid">
+        <div class="field">
+          <label for="questionCount">問題数</label>
+          <select id="questionCount">
+            <option value="10">10問</option>
+            <option value="20">20問</option>
+            <option value="37">37問（全楽章）</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="replayMode">再生回数</label>
+          <select id="replayMode">
+            <option value="unlimited">何度でも再生可</option>
+            <option value="1">1回だけ</option>
+            <option value="2">2回まで</option>
+          </select>
+        </div>
+      </div>
+      <p class="note">各問題で冒頭3秒を聴き、交響曲番号と楽章番号を選びます。出題順はランダムで重複しません。</p>
+      <button id="startBtn" class="primary">クイズを始める</button>
+    </section>
+
+    <section id="quiz" class="card hidden">
+      <div class="topbar">
+        <div id="progress" class="progress">1 / 10</div>
+        <div id="score" class="score">0点</div>
+      </div>
+      <h2 class="question-title">この3秒は、どの交響曲の何楽章？</h2>
+
+      <div class="play-row">
+        <button id="playBtn" class="play-btn">3秒再生</button>
+        <span id="replayInfo" class="timer-pill">何度でも再生できます</span>
+      </div>
+
+      <div class="player-shell" aria-label="YouTube player">
+        <div id="player"></div>
+      </div>
+      <p class="warning">YouTubeの仕様上、動画タイトル等がプレーヤー上に表示される場合があります。プレーヤーを隠す・覆う実装は行っていません。</p>
+
+      <div class="answer-area">
+        <h3>交響曲番号</h3>
+        <div id="symphonyButtons" class="button-grid"></div>
+        <h3>楽章番号</h3>
+        <div id="movementButtons" class="button-grid movement-grid"></div>
+        <div class="submit-row">
+          <button id="answerBtn" class="primary" disabled>回答する</button>
+          <button id="nextBtn" class="secondary hidden">次の問題</button>
+        </div>
+        <div id="feedback" class="feedback hidden"></div>
+      </div>
+    </section>
+
+    <section id="result" class="card hidden">
+      <div style="color:var(--muted);font-weight:900">RESULT</div>
+      <div id="resultScore" class="result-score">0 / 10</div>
+      <div id="resultSub" class="result-sub"></div>
+      <div class="result-actions">
+        <button id="retryBtn" class="primary">もう一度</button>
+        <button id="backBtn" class="secondary">設定に戻る</button>
+      </div>
+    </section>
+
+    <footer>
+      音源はYouTube上の動画を埋め込み再生しています。YouTube動画そのものを本アプリに保存・再配布していません。開始位置は授業用イントロクイズ向けに調整した値です。
+    </footer>
+  </main>
+
+  <script>
+    const TRACKS = [
+      {s:1,m:1,v:'JAGip4nOsOg',start:25},{s:1,m:2,v:'JAGip4nOsOg',start:557},{s:1,m:3,v:'JAGip4nOsOg',start:978},{s:1,m:4,v:'JAGip4nOsOg',start:1190},
+      {s:2,m:1,v:'DPpxhmivhCQ',start:9},{s:2,m:2,v:'DPpxhmivhCQ',start:817},{s:2,m:3,v:'DPpxhmivhCQ',start:1519},{s:2,m:4,v:'DPpxhmivhCQ',start:1828},
+      {s:3,m:1,v:'DWwppYEEdcI',start:37},{s:3,m:2,v:'DWwppYEEdcI',start:1058},{s:3,m:3,v:'DWwppYEEdcI',start:1818},{s:3,m:4,v:'DWwppYEEdcI',start:2163},
+      {s:4,m:1,v:'1u8vBQrNJs8',start:1},{s:4,m:2,v:'1u8vBQrNJs8',start:695},{s:4,m:3,v:'1u8vBQrNJs8',start:1280},{s:4,m:4,v:'1u8vBQrNJs8',start:1630},
+      {s:5,m:1,v:'de7QndXj5is',start:12},{s:5,m:2,v:'de7QndXj5is',start:500},{s:5,m:3,v:'de7QndXj5is',start:1118},{s:5,m:4,v:'de7QndXj5is',start:1442},
+      {s:6,m:1,v:'i66PId3uZ-4',start:0},{s:6,m:2,v:'i66PId3uZ-4',start:698},{s:6,m:3,v:'i66PId3uZ-4',start:1425},{s:6,m:4,v:'i66PId3uZ-4',start:1754},{s:6,m:5,v:'i66PId3uZ-4',start:1987},
+      {s:7,m:1,v:'H_5GaFEPUww',start:61},{s:7,m:2,v:'H_5GaFEPUww',start:773},{s:7,m:3,v:'H_5GaFEPUww',start:1275},{s:7,m:4,v:'H_5GaFEPUww',start:1728},
+      {s:8,m:1,v:'WcgxxciDdy0',start:3},{s:8,m:2,v:'WcgxxciDdy0',start:514},{s:8,m:3,v:'WcgxxciDdy0',start:739},{s:8,m:4,v:'WcgxxciDdy0',start:1010},
+      {s:9,m:1,v:'PgnKjHvRAAY',start:1},{s:9,m:2,v:'PgnKjHvRAAY',start:972},{s:9,m:3,v:'PgnKjHvRAAY',start:1701},{s:9,m:4,v:'PgnKjHvRAAY',start:2517}
+    ];
+
+    const setupEl = document.getElementById('setup');
+    const quizEl = document.getElementById('quiz');
+    const resultEl = document.getElementById('result');
+    const startBtn = document.getElementById('startBtn');
+    const playBtn = document.getElementById('playBtn');
+    const answerBtn = document.getElementById('answerBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const retryBtn = document.getElementById('retryBtn');
+    const backBtn = document.getElementById('backBtn');
+    const symphonyButtons = document.getElementById('symphonyButtons');
+    const movementButtons = document.getElementById('movementButtons');
+    const progressEl = document.getElementById('progress');
+    const scoreEl = document.getElementById('score');
+    const feedbackEl = document.getElementById('feedback');
+    const replayInfo = document.getElementById('replayInfo');
+
+    let player = null;
+    let apiReady = false;
+    let quiz = [];
+    let index = 0;
+    let score = 0;
+    let selectedS = null;
+    let selectedM = null;
+    let answered = false;
+    let playCount = 0;
+    let replayLimit = Infinity;
+    let stopTimer = null;
+    let stopWhenPlaying = false;
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function buildButtons() {
+      for (let i = 1; i <= 9; i++) {
+        const b = document.createElement('button');
+        b.className = 'answer-btn';
+        b.textContent = i;
+        b.addEventListener('click', () => selectSymphony(i, b));
+        symphonyButtons.appendChild(b);
+      }
+      for (let i = 1; i <= 5; i++) {
+        const b = document.createElement('button');
+        b.className = 'answer-btn';
+        b.textContent = i;
+        b.addEventListener('click', () => selectMovement(i, b));
+        movementButtons.appendChild(b);
+      }
+    }
+
+    function selectSymphony(n, btn) {
+      if (answered) return;
+      selectedS = n;
+      [...symphonyButtons.children].forEach(x => x.classList.remove('selected'));
+      btn.classList.add('selected');
+      updateMovementAvailability();
+      updateAnswerEnabled();
+    }
+
+    function selectMovement(n, btn) {
+      if (answered || btn.disabled) return;
+      selectedM = n;
+      [...movementButtons.children].forEach(x => x.classList.remove('selected'));
+      btn.classList.add('selected');
+      updateAnswerEnabled();
+    }
+
+    function updateMovementAvailability() {
+      const max = selectedS === 6 ? 5 : 4;
+      [...movementButtons.children].forEach((b, i) => {
+        const m = i + 1;
+        b.disabled = m > max;
+        if (b.disabled && selectedM === m) {
+          selectedM = null;
+          b.classList.remove('selected');
+        }
+      });
+    }
+
+    function updateAnswerEnabled() {
+      answerBtn.disabled = !(selectedS && selectedM) || answered;
+    }
+
+    function resetSelections() {
+      selectedS = null;
+      selectedM = null;
+      answered = false;
+      playCount = 0;
+      [...symphonyButtons.children, ...movementButtons.children].forEach(b => {
+        b.classList.remove('selected');
+        b.disabled = false;
+      });
+      answerBtn.disabled = true;
+      answerBtn.classList.remove('hidden');
+      nextBtn.classList.add('hidden');
+      feedbackEl.className = 'feedback hidden';
+      feedbackEl.textContent = '';
+      updateReplayInfo();
+      updatePlayEnabled();
+    }
+
+    function updateReplayInfo() {
+      if (replayLimit === Infinity) replayInfo.textContent = '何度でも再生できます';
+      else replayInfo.textContent = `再生 ${playCount} / ${replayLimit} 回`;
+    }
+
+    function updatePlayEnabled() {
+      playBtn.disabled = !apiReady || playCount >= replayLimit || answered;
+    }
+
+    function currentTrack() { return quiz[index]; }
+
+    function loadQuestion() {
+      resetSelections();
+      progressEl.textContent = `${index + 1} / ${quiz.length}`;
+      scoreEl.textContent = `${score}点`;
+      if (player && apiReady) {
+        player.stopVideo();
+        player.cueVideoById({ videoId: currentTrack().v, startSeconds: currentTrack().start });
+      }
+    }
+
+    function playClip() {
+      if (!apiReady || playCount >= replayLimit || answered) return;
+      const t = currentTrack();
+      clearTimeout(stopTimer);
+      playCount++;
+      updateReplayInfo();
+      updatePlayEnabled();
+      stopWhenPlaying = true;
+      player.loadVideoById({ videoId: t.v, startSeconds: t.start });
+    }
+
+    function submitAnswer() {
+      if (!selectedS || !selectedM || answered) return;
+      answered = true;
+      clearTimeout(stopTimer);
+      stopWhenPlaying = false;
+      if (player) player.pauseVideo();
+      const t = currentTrack();
+      const correct = selectedS === t.s && selectedM === t.m;
+      if (correct) score++;
+      scoreEl.textContent = `${score}点`;
+      feedbackEl.className = `feedback ${correct ? 'good' : 'bad'}`;
+      feedbackEl.innerHTML = correct
+        ? `正解です。<span class="answer-line">交響曲第${t.s}番　第${t.m}楽章</span>`
+        : `惜しい。<span class="answer-line">正解：交響曲第${t.s}番　第${t.m}楽章</span>`;
+      answerBtn.classList.add('hidden');
+      nextBtn.classList.remove('hidden');
+      nextBtn.textContent = index === quiz.length - 1 ? '結果を見る' : '次の問題';
+      updatePlayEnabled();
+    }
+
+    function nextQuestion() {
+      if (!answered) return;
+      if (index < quiz.length - 1) {
+        index++;
+        loadQuestion();
+      } else {
+        showResult();
+      }
+    }
+
+    function showResult() {
+      if (player) player.stopVideo();
+      quizEl.classList.add('hidden');
+      resultEl.classList.remove('hidden');
+      document.getElementById('resultScore').textContent = `${score} / ${quiz.length}`;
+      const pct = Math.round(score / quiz.length * 100);
+      document.getElementById('resultSub').textContent = `正答率 ${pct}%`;
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+    function startQuiz() {
+      const count = Number(document.getElementById('questionCount').value);
+      const replay = document.getElementById('replayMode').value;
+      replayLimit = replay === 'unlimited' ? Infinity : Number(replay);
+      quiz = shuffle(TRACKS).slice(0, count);
+      index = 0;
+      score = 0;
+      setupEl.classList.add('hidden');
+      resultEl.classList.add('hidden');
+      quizEl.classList.remove('hidden');
+      loadQuestion();
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+    function goSetup() {
+      clearTimeout(stopTimer);
+      if (player) player.stopVideo();
+      resultEl.classList.add('hidden');
+      quizEl.classList.add('hidden');
+      setupEl.classList.remove('hidden');
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+    window.onYouTubeIframeAPIReady = function() {
+      player = new YT.Player('player', {
+        width: '560',
+        height: '315',
+        playerVars: {
+          controls: 0,
+          rel: 0,
+          playsinline: 1,
+          fs: 0,
+          disablekb: 1
+        },
+        events: {
+          onReady: () => {
+            apiReady = true;
+            updatePlayEnabled();
+            if (quiz.length) loadQuestion();
+          },
+          onStateChange: (event) => {
+            if (event.data === YT.PlayerState.PLAYING && stopWhenPlaying) {
+              stopWhenPlaying = false;
+              clearTimeout(stopTimer);
+              stopTimer = setTimeout(() => {
+                if (player && typeof player.pauseVideo === 'function') player.pauseVideo();
+              }, 3000);
+            }
+          }
+        }
+      });
+    };
+
+    buildButtons();
+    startBtn.addEventListener('click', startQuiz);
+    playBtn.addEventListener('click', playClip);
+    answerBtn.addEventListener('click', submitAnswer);
+    nextBtn.addEventListener('click', nextQuestion);
+    retryBtn.addEventListener('click', startQuiz);
+    backBtn.addEventListener('click', goSetup);
+
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(tag);
+  </script>
+</body>
+</html>
